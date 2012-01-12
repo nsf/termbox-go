@@ -15,7 +15,7 @@ type Event struct {
 	Type uint8  // one of EVENT_ constants
 	Mod  uint8  // one of MOD_ constants or 0
 	Key  uint16 // one of KEY_ constants, invalid if 'Ch' is not 0
-	Ch   uint32 // a unicode character
+	Ch   rune   // a unicode character
 	W    int32  // width of the screen
 	H    int32  // height of the screen
 }
@@ -24,7 +24,7 @@ type Event struct {
 // array of cells. 'Ch' is a unicode character, 'Fg' and 'Bg' are foreground
 // and background attributes respectively.
 type Cell struct {
-	Ch uint32
+	Ch rune
 	Fg uint16
 	Bg uint16
 }
@@ -170,7 +170,7 @@ func Shutdown() {
 
 // Changes cell's parameters in the internal back buffer at the specified
 // position.
-func ChangeCell(x int, y int, ch int, fg uint16, bg uint16) {
+func ChangeCell(x int, y int, ch rune, fg uint16, bg uint16) {
 	C.tb_change_cell(C.uint(x), C.uint(y), C.uint32_t(ch), C.uint16_t(fg), C.uint16_t(bg))
 }
 
