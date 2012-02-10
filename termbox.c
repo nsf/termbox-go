@@ -48,6 +48,9 @@ static unsigned int lasty = LAST_COORD_INIT;
 static int cursor_x = -1;
 static int cursor_y = -1;
 
+static uint16_t background = TB_BLACK;
+static uint16_t foreground = TB_WHITE;
+
 static void cellbuf_init(struct cellbuf *buf, unsigned int width, unsigned int height);
 static void cellbuf_resize(struct cellbuf *buf, unsigned int width, unsigned int height);
 static void cellbuf_clear(struct cellbuf *buf);
@@ -250,6 +253,12 @@ int tb_select_input_mode(int mode)
 	return inputmode;
 }
 
+void tb_set_clear_attributes(uint16_t fg, uint16_t bg)
+{
+	foreground = fg;
+	background = bg;
+}
+
 /* -------------------------------------------------------- */
 
 static void cellbuf_init(struct cellbuf *buf, unsigned int width, unsigned int height)
@@ -292,8 +301,8 @@ static void cellbuf_clear(struct cellbuf *buf)
 
 	for (i = 0; i < ncells; ++i) {
 		buf->cells[i].ch = ' ';
-		buf->cells[i].fg = TB_WHITE;
-		buf->cells[i].bg = TB_BLACK;
+		buf->cells[i].fg = foreground;
+		buf->cells[i].bg = background;
 	}
 }
 
@@ -357,7 +366,7 @@ static void send_char(unsigned int x, unsigned int y, uint32_t c)
 
 static void send_clear()
 {
-	send_attr(TB_WHITE, TB_BLACK);
+	send_attr(foreground, background);
 	fputs(funcs[T_CLEAR_SCREEN], out);
 	if (!IS_CURSOR_HIDDEN(cursor_x, cursor_y))
 		fprintf(out, funcs[T_MOVE_CURSOR], cursor_y+1, cursor_x+1);

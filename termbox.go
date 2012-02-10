@@ -254,6 +254,11 @@ func SelectInputMode(mode int) {
 	C.tb_select_input_mode(C.int(mode))
 }
 
+// Set attributes which are used for clearing the internal back buffer.
+func SetClearAttributes(fg, bg uint16) {
+	C.tb_set_clear_attributes(C.uint16_t(fg), C.uint16_t(bg))
+}
+
 // Shortcut for termbox.PollEvent(e).
 func (e *Event) Poll() int {
 	return PollEvent(e)

@@ -150,6 +150,7 @@ SO_IMPORT void tb_blit(unsigned int x, unsigned int y, unsigned int w, unsigned 
 #define TB_INPUT_ALT 2
 /* with 0 returns current input mode */
 SO_IMPORT int tb_select_input_mode(int mode);
+SO_IMPORT void tb_set_clear_attributes(uint16_t fg, uint16_t bg);
 
 #define TB_EVENT_KEY 1
 #define TB_EVENT_RESIZE 2
