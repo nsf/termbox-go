@@ -143,10 +143,8 @@ const (
 
 // Event type. See Event.Type field.
 const (
-	EventNone EventType = iota
-	EventKey
+	EventKey EventType = iota
 	EventResize
-	EventError
 )
 
 func Init() error {
@@ -294,13 +292,13 @@ func ChangeCell(x, y int, ch rune, fg, bg Attribute) {
 
 // TODO: func Blit
 
-func PollEvent(event *Event) EventType {
-	*event = Event{}
+func PollEvent() Event {
+	var event Event
 
 	// try to extract event from input buffer, return on success
 	event.Type = EventKey
-	if extract_event(event) {
-		return EventKey
+	if extract_event(&event) {
+		return event
 	}
 
 	for {
@@ -308,13 +306,13 @@ func PollEvent(event *Event) EventType {
 		case data := <-input_comm:
 			inbuf = append(inbuf, data...)
 			input_comm <- data
-			if extract_event(event) {
-				return EventKey
+			if extract_event(&event) {
+				return event
 			}
 		case <-sigwinch_input:
 			event.Type = EventResize
 			event.Width, event.Height = get_term_size(out.Fd())
-			return EventResize
+			return event
 		}
 	}
 	panic("unreachable")
