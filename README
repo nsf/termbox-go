@@ -1,1 +1,1 @@
-Goinstallable version of the termbox library + Go bindings.
+Native Go implementation of the termbox library. Beta.

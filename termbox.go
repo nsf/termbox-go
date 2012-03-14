@@ -1,270 +1,321 @@
-// Termbox library provides facilities for terminal input/output manipulation
-// in a pseudo-GUI style.
 package termbox
 
-// #include "termbox.h"
-import "C"
-import (
-	"unsafe"
-	"errors"
+import "unicode/utf8"
+import "errors"
+import "bytes"
+import "syscall"
+import "unsafe"
+import "strings"
+import "fmt"
+import "os"
+import "io"
+
+// private API
+
+const (
+	t_enter_ca = iota
+	t_exit_ca
+	t_show_cursor
+	t_hide_cursor
+	t_clear_screen
+	t_sgr
+	t_sgr0
+	t_underline
+	t_bold
+	t_blink
+	t_move_cursor
+	t_enter_keypad
+	t_exit_keypad
 )
 
-// This type represents termbox event. 'Mod', 'Key' and 'Ch' fields are valid
-// if 'Type' is EVENT_KEY. 'W' and 'H' are valid if 'Type' is EVENT_RESIZE.
-type Event struct {
-	Type uint8  // one of EVENT_ constants
-	Mod  uint8  // one of MOD_ constants or 0
-	Key  uint16 // one of KEY_ constants, invalid if 'Ch' is not 0
-	Ch   rune   // a unicode character
-	W    int32  // width of the screen
-	H    int32  // height of the screen
+const (
+	coord_invalid = -2
+	attr_invalid  = Attribute(0xFFFF)
+	cursor_hidden = -1
+)
+
+var (
+	// term specific sequences
+	keys  []string
+	funcs []string
+
+	// termbox inner state
+	orig_tios      syscall.Termios
+	back_buffer    cellbuf
+	front_buffer   cellbuf
+	termw          int
+	termh          int
+	input_mode     = InputEsc
+	out            *os.File
+	in             *os.File
+	lastfg         = attr_invalid
+	lastbg         = attr_invalid
+	lastx          = coord_invalid
+	lasty          = coord_invalid
+	cursor_x       = cursor_hidden
+	cursor_y       = cursor_hidden
+	foreground     = ColorWhite
+	background     = ColorBlack
+	inbuf          = make([]byte, 0, 64)
+	outbuf         bytes.Buffer
+	sigwinch_input = make(chan os.Signal, 10)
+	sigwinch_draw  = make(chan os.Signal, 1)
+	input_comm     = make(chan []byte)
+)
+
+type cellbuf struct {
+	width  int
+	height int
+	cells  []Cell
 }
 
-// A cell, single conceptual entity on the screen. The screen is basically a 2d
-// array of cells. 'Ch' is a unicode character, 'Fg' and 'Bg' are foreground
-// and background attributes respectively.
-type Cell struct {
-	Ch rune
-	Fg uint16
-	Bg uint16
+func (this *cellbuf) init(width, height int) {
+	this.width = width
+	this.height = height
+	this.cells = make([]Cell, width*height)
 }
 
-type struct_tb_event_ptr *C.struct_tb_event
-type struct_tb_cell_ptr *C.struct_tb_cell
+func (this *cellbuf) resize(width, height int) {
+	if this.width == width && this.height == height {
+		return
+	}
 
-// Key constants, see Event.Key field.
-const (
-	KEY_F1          = (0xFFFF - 0)
-	KEY_F2          = (0xFFFF - 1)
-	KEY_F3          = (0xFFFF - 2)
-	KEY_F4          = (0xFFFF - 3)
-	KEY_F5          = (0xFFFF - 4)
-	KEY_F6          = (0xFFFF - 5)
-	KEY_F7          = (0xFFFF - 6)
-	KEY_F8          = (0xFFFF - 7)
-	KEY_F9          = (0xFFFF - 8)
-	KEY_F10         = (0xFFFF - 9)
-	KEY_F11         = (0xFFFF - 10)
-	KEY_F12         = (0xFFFF - 11)
-	KEY_INSERT      = (0xFFFF - 12)
-	KEY_DELETE      = (0xFFFF - 13)
-	KEY_HOME        = (0xFFFF - 14)
-	KEY_END         = (0xFFFF - 15)
-	KEY_PGUP        = (0xFFFF - 16)
-	KEY_PGDN        = (0xFFFF - 17)
-	KEY_ARROW_UP    = (0xFFFF - 18)
-	KEY_ARROW_DOWN  = (0xFFFF - 19)
-	KEY_ARROW_LEFT  = (0xFFFF - 20)
-	KEY_ARROW_RIGHT = (0xFFFF - 21)
+	oldw := this.width
+	oldh := this.height
+	oldcells := this.cells
 
-	KEY_CTRL_TILDE       = 0x00
-	KEY_CTRL_2           = 0x00
-	KEY_CTRL_A           = 0x01
-	KEY_CTRL_B           = 0x02
-	KEY_CTRL_C           = 0x03
-	KEY_CTRL_D           = 0x04
-	KEY_CTRL_E           = 0x05
-	KEY_CTRL_F           = 0x06
-	KEY_CTRL_G           = 0x07
-	KEY_BACKSPACE        = 0x08
-	KEY_CTRL_H           = 0x08
-	KEY_TAB              = 0x09
-	KEY_CTRL_I           = 0x09
-	KEY_CTRL_J           = 0x0A
-	KEY_CTRL_K           = 0x0B
-	KEY_CTRL_L           = 0x0C
-	KEY_ENTER            = 0x0D
-	KEY_CTRL_M           = 0x0D
-	KEY_CTRL_N           = 0x0E
-	KEY_CTRL_O           = 0x0F
-	KEY_CTRL_P           = 0x10
-	KEY_CTRL_Q           = 0x11
-	KEY_CTRL_R           = 0x12
-	KEY_CTRL_S           = 0x13
-	KEY_CTRL_T           = 0x14
-	KEY_CTRL_U           = 0x15
-	KEY_CTRL_V           = 0x16
-	KEY_CTRL_W           = 0x17
-	KEY_CTRL_X           = 0x18
-	KEY_CTRL_Y           = 0x19
-	KEY_CTRL_Z           = 0x1A
-	KEY_ESC              = 0x1B
-	KEY_CTRL_LSQ_BRACKET = 0x1B
-	KEY_CTRL_3           = 0x1B
-	KEY_CTRL_4           = 0x1C
-	KEY_CTRL_BACKSLASH   = 0x1C
-	KEY_CTRL_5           = 0x1D
-	KEY_CTRL_RSQ_BRACKET = 0x1D
-	KEY_CTRL_6           = 0x1E
-	KEY_CTRL_7           = 0x1F
-	KEY_CTRL_SLASH       = 0x1F
-	KEY_CTRL_UNDERSCORE  = 0x1F
-	KEY_SPACE            = 0x20
-	KEY_BACKSPACE2       = 0x7F
-	KEY_CTRL_8           = 0x7F
-)
+	this.init(width, height)
+	this.clear()
 
-// Alt modifier constant, see Event.Mod field and SetInputMode function.
-const MOD_ALT = 0x01
+	minw, minh := oldw, oldh
 
-// Cell attributes, it is possible to use multiple attributes by combining them
-// using bitwise OR ('|'). Although, colors cannot be combined. But you can
-// combine attributes and a single color.
-const (
-	BLACK   = 0x00
-	RED     = 0x01
-	GREEN   = 0x02
-	YELLOW  = 0x03
-	BLUE    = 0x04
-	MAGENTA = 0x05
-	CYAN    = 0x06
-	WHITE   = 0x07
+	if width < minw {
+		minw = width
+	}
+	if height < minh {
+		minh = height
+	}
 
-	BOLD      = 0x10
-	UNDERLINE = 0x20
-)
+	for i := 0; i < minh; i++ {
+		srco, dsto := i*oldw, i*width
+		src := oldcells[srco : srco+minw]
+		dst := this.cells[dsto : dsto+minw]
+		copy(dst, src)
+	}
+}
 
-// Special coordinate for SetCursor. If you call:
-//	SetCursor(HIDE_CURSOR, HIDE_CURSOR)
-// This function call hides the cursor.
-const HIDE_CURSOR = -1
+func (this *cellbuf) clear() {
+	for i := range this.cells {
+		c := &this.cells[i]
+		c.Ch = ' '
+		c.Fg = foreground
+		c.Bg = background
+	}
+}
 
-// Input mode. See SelectInputMode function.
-const (
-	INPUT_ESC = 1
-	INPUT_ALT = 2
-)
+type winsize struct {
+	rows    uint16
+	cols    uint16
+	xpixels uint16
+	ypixels uint16
+}
 
-// Event type. See Event.Type field.
-const (
-	EVENT_KEY    = 1
-	EVENT_RESIZE = 2
-)
+func get_term_size(fd uintptr) (int, int) {
+	var sz winsize
+	_, _, _ = syscall.Syscall(syscall.SYS_IOCTL,
+		fd, uintptr(syscall.TIOCGWINSZ), uintptr(unsafe.Pointer(&sz)))
+	return int(sz.cols), int(sz.rows)
+}
 
-// Initializes termbox library. This function should be called before any other functions.
-// After successful initialization, the library must be finalized using 'Shutdown' function.
-//
-// Example usage:
-//	err := termbox.Init()
-//	if err != nil {
-//		panic(err.String())
-//	}
-//	defer termbox.Shutdown()
-func Init() error {
-	switch int(C.tb_init()) {
-	case -3:
-		return errors.New("Pipe trap error")
-	case -2:
-		return errors.New("Failed to open /dev/tty")
-	case -1:
-		return errors.New("Unsupported terminal")
+func send_attr(fg, bg Attribute) {
+	if fg != lastfg || bg != lastbg {
+		outbuf.WriteString(funcs[t_sgr0])
+		// TODO: get rid of fprintf
+		fmt.Fprintf(&outbuf, funcs[t_sgr], fg&0x0F, bg&0x0F)
+		if fg&AttrBold != 0 {
+			outbuf.WriteString(funcs[t_bold])
+		}
+		if bg&AttrBold != 0 {
+			outbuf.WriteString(funcs[t_blink])
+		}
+		if fg&AttrUnderline != 0 {
+			outbuf.WriteString(funcs[t_underline])
+		}
+
+		lastfg, lastbg = fg, bg
+	}
+}
+
+func send_char(x, y int, ch rune) {
+	var buf [8]byte
+	n := utf8.EncodeRune(buf[:], ch)
+	if x-1 != lastx || y != lasty {
+		fmt.Fprintf(&outbuf, funcs[t_move_cursor], y+1, x+1) // TODO: get rid of fprintf
+	}
+	lastx, lasty = x, y
+	outbuf.Write(buf[:n])
+}
+
+func is_cursor_hidden(x, y int) bool {
+	return x == -1 || y == -1
+}
+
+func flush() {
+	io.Copy(out, &outbuf)
+	outbuf.Reset()
+}
+
+func send_clear() {
+	send_attr(foreground, background)
+	outbuf.WriteString(funcs[t_clear_screen])
+	if !is_cursor_hidden(cursor_x, cursor_y) {
+		fmt.Fprintf(&outbuf, funcs[t_move_cursor], cursor_y+1, cursor_x+1)
+	}
+	flush()
+
+	// we need to invalidate cursor position too and these two vars are
+	// used only for simple cursor positioning optimization, cursor
+	// actually may be in the correct place, but we simply discard
+	// optimization once and it gives us simple solution for the case when
+	// cursor moved
+	lastx = coord_invalid
+	lasty = coord_invalid
+}
+
+func update_size() {
+	termw, termh = get_term_size(out.Fd())
+	back_buffer.resize(termw, termh)
+	front_buffer.resize(termw, termh)
+	front_buffer.clear()
+	send_clear()
+}
+
+func tcsetattr(fd uintptr, termios *syscall.Termios) error {
+	r, _, e := syscall.Syscall(syscall.SYS_IOCTL,
+		fd, uintptr(syscall.TCSETS), uintptr(unsafe.Pointer(termios)))
+	if r != 0 {
+		return os.NewSyscallError("SYS_IOCTL", e)
 	}
 	return nil
 }
 
-// Finalizes termbox library, should be called after successful initialization
-// when termbox's functionality isn't required anymore.
-func Shutdown() {
-	C.tb_shutdown()
+func tcgetattr(fd uintptr, termios *syscall.Termios) error {
+	r, _, e := syscall.Syscall(syscall.SYS_IOCTL,
+		fd, uintptr(syscall.TCGETS), uintptr(unsafe.Pointer(termios)))
+	if r != 0 {
+		return os.NewSyscallError("SYS_IOCTL", e)
+	}
+	return nil
 }
 
-// Changes cell's parameters in the internal back buffer at the specified
-// position.
-func ChangeCell(x int, y int, ch rune, fg uint16, bg uint16) {
-	C.tb_change_cell(C.uint(x), C.uint(y), C.uint32_t(ch), C.uint16_t(fg), C.uint16_t(bg))
+func setup_term() error {
+	name := os.Getenv("TERM")
+	if name == "" {
+		return errors.New("termbox: TERM environment variable not set")
+	}
+
+	for _, t := range terms {
+		if t.name == name {
+			keys = t.keys
+			funcs = t.funcs
+			return nil
+		}
+	}
+
+	compat_table := []struct {
+		partial string
+		keys    []string
+		funcs   []string
+	}{
+		{"xterm", xterm_keys, xterm_funcs},
+		{"rxvt", rxvt_unicode_keys, rxvt_unicode_funcs},
+		{"linux", linux_keys, linux_funcs},
+		{"Eterm", Eterm_keys, Eterm_funcs},
+		{"screen", screen_keys, screen_funcs},
+		// let's assume that 'cygwin' is xterm compatible
+		{"cygwin", xterm_keys, xterm_funcs},
+	}
+
+	// try compatibility variants
+	for _, it := range compat_table {
+		if strings.Contains(name, it.partial) {
+			keys = it.keys
+			funcs = it.funcs
+			return nil
+		}
+	}
+
+	return errors.New("termbox: unsupported terminal")
 }
 
-// Puts the 'cell' into the internal back buffer at the specified position.
-func PutCell(x, y int, cell *Cell) {
-	C.tb_put_cell(C.uint(x), C.uint(y), struct_tb_cell_ptr(unsafe.Pointer(cell)))
+func parse_escape_sequence(event *Event, buf []byte) int {
+	bufstr := string(buf)
+	for i, key := range keys {
+		if strings.HasPrefix(bufstr, key) {
+			event.Ch = 0
+			event.Key = Key(0xFFFF - i)
+			return len(key)
+		}
+	}
+	return 0
 }
 
-// 'Blit' function copies the 'cells' buffer to the internal back buffer at the
-// position specified by 'x' and 'y'. Blit doesn't perform any kind of cuts and
-// if contents of the cells buffer cannot be placed without crossing back
-// buffer's boundaries, the operation is discarded. Parameter 'w' must be > 0,
-// otherwise it will cause "division by zero" panic.
-//
-// The width and the height of the 'cells' buffer are calculated that way:
-//	w := w
-//	h := len(cells) / w
-func Blit(x, y, w int, cells []Cell) {
-	h := len(cells) / w
-	C.tb_blit(C.uint(x), C.uint(y), C.uint(w), C.uint(h), struct_tb_cell_ptr(unsafe.Pointer(&cells[0])))
-}
+func extract_event(event *Event) bool {
+	if len(inbuf) == 0 {
+		return false
+	}
 
-// Synchronizes the internal back buffer with the terminal.
-func Present() {
-	C.tb_present()
-}
+	if inbuf[0] == '\033' {
+		// possible escape sequence
+		n := parse_escape_sequence(event, inbuf)
+		if n != 0 {
+			copy(inbuf, inbuf[n:])
+			inbuf = inbuf[:len(inbuf)-n]
+			return true
+		}
 
-// Clears the internal back buffer.
-func Clear() {
-	C.tb_clear()
-}
+		// it's not escape sequence, then it's Alt or Esc, check input_mode
+		switch input_mode {
+		case InputEsc:
+			// if we're in escape mode, fill Esc event, pop buffer, return success
+			event.Ch = 0
+			event.Key = KeyEsc
+			event.Mod = 0
+			copy(inbuf, inbuf[1:])
+			inbuf = inbuf[:len(inbuf)-1]
+			return true
+		case InputAlt:
+			// if we're in alt mode, set Alt modifier to event and redo parsing
+			event.Mod = ModAlt
+			copy(inbuf, inbuf[1:])
+			inbuf = inbuf[:len(inbuf)-1]
+			return extract_event(event)
+		default:
+			panic("unreachable")
+		}
+	}
 
-// Wait for an event. This is a blocking function call. If an error occurs,
-// returns -1. Otherwise the return value is one of EVENT_ consts.
-func PollEvent(e *Event) int {
-	return int(C.tb_poll_event(struct_tb_event_ptr(unsafe.Pointer(e))))
-}
+	// if we're here, this is not an escape sequence and not an alt sequence
+	// so, it's a FUNCTIONAL KEY or a UNICODE character
 
-// Wait for an event 'timeout' milliseconds. If no event occurs, returns 0. If
-// an error occurs, returns -1. Otherwise the return value is one of EVENT_
-// consts.
-func PeekEvent(e *Event, timeout int) int {
-	return int(C.tb_peek_event(struct_tb_event_ptr(unsafe.Pointer(e)), C.uint(timeout)))
-}
+	// first of all check if it's a functional key
+	if Key(inbuf[0]) <= KeySpace || Key(inbuf[0]) == KeyBackspace2 {
+		// fill event, pop buffer, return success
+		event.Ch = 0
+		event.Key = Key(inbuf[0])
+		copy(inbuf, inbuf[1:])
+		inbuf = inbuf[:len(inbuf)-1]
+		return true
+	}
 
-// Returns the width of the internal back buffer (which is the same as
-// terminal's window width in characters).
-func Width() int {
-	return int(C.tb_width())
-}
+	// the only possible option is utf8 rune
+	if r, n := utf8.DecodeRune(inbuf); r != utf8.RuneError {
+		event.Ch = r
+		event.Key = 0
+		copy(inbuf, inbuf[n:])
+		inbuf = inbuf[:len(inbuf)-n]
+		return true
+	}
 
-// Returns the height of the internal back buffer (which is the same as
-// terminal's window height in characters).
-func Height() int {
-	return int(C.tb_height())
-}
-
-// Sets the position of the cursor. See also HIDE_CURSOR and HideCursor().
-func SetCursor(x int, y int) {
-	C.tb_set_cursor(C.int(x), C.int(y))
-}
-
-// The shortcut for SetCursor(HIDE_CURSOR, HIDE_CURSOR).
-func HideCursor() {
-	C.tb_set_cursor(HIDE_CURSOR, HIDE_CURSOR)
-}
-
-// Selects termbox input mode. Termbox has two input modes:
-//
-// 1. ESC input mode. When ESC sequence is in the buffer and it doesn't
-// match any known sequence. ESC means KEY_ESC.
-//
-// 2. ALT input mode. When ESC sequence is in the buffer and it doesn't match
-// any known sequence. ESC enables MOD_ALT modifier for the next keyboard
-// event.
-//
-// If 'mode' is 0, returns the current input mode. See also INPUT_ constants.
-//
-// Note: INPUT_ALT mode may not work with PeekEvent.
-func SelectInputMode(mode int) {
-	C.tb_select_input_mode(C.int(mode))
-}
-
-// Set attributes which are used for clearing the internal back buffer.
-func SetClearAttributes(fg, bg uint16) {
-	C.tb_set_clear_attributes(C.uint16_t(fg), C.uint16_t(bg))
-}
-
-// Shortcut for termbox.PollEvent(e).
-func (e *Event) Poll() int {
-	return PollEvent(e)
-}
-
-// Shortcut for termbox.PeekEvent(e, timeout).
-func (e *Event) Peek(timeout int) int {
-	return PeekEvent(e, timeout)
+	return false
 }
