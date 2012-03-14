@@ -274,6 +274,10 @@ func SetCursor(x, y int) {
 	}
 }
 
+func HideCursor() {
+	SetCursor(cursor_hidden, cursor_hidden)
+}
+
 func PutCell(x, y int, cell *Cell) {
 	if x < 0 || x >= back_buffer.width {
 		return
@@ -290,7 +294,27 @@ func ChangeCell(x, y int, ch rune, fg, bg Attribute) {
 	PutCell(x, y, &c)
 }
 
-// TODO: func Blit
+func Blit(x, y, w int, cells []Cell) {
+	h := len(cells) / w
+	if x+w > back_buffer.width || x < 0 {
+		return
+	}
+	if y+h > back_buffer.height || y < 0 {
+		return
+	}
+
+	dsti := y * back_buffer.width + x
+	srci := 0
+
+	src := cells
+	dst := back_buffer.cells
+
+	for i := 0; i < h; i++ {
+		copy(dst[dsti:dsti+w], src[srci:srci+w])
+		dsti += back_buffer.width
+		srci += w
+	}
+}
 
 func PollEvent() Event {
 	var event Event
