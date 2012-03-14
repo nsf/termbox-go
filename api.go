@@ -147,6 +147,15 @@ const (
 	EventResize
 )
 
+// Initializes termbox library. This function should be called before any other functions.
+// After successful initialization, the library must be finalized using 'Shutdown' function.
+//
+// Example usage:
+//      err := termbox.Init()
+//      if err != nil {
+//              panic(err.String())
+//      }
+//      defer termbox.Shutdown()
 func Init() error {
 	// TODO: try os.Stdin and os.Stdout directly
 	var err error
@@ -216,6 +225,8 @@ func Init() error {
 	return nil
 }
 
+// Finalizes termbox library, should be called after successful initialization
+// when termbox's functionality isn't required anymore.
 func Shutdown() {
 	out.WriteString(funcs[t_show_cursor])
 	out.WriteString(funcs[t_sgr0])
@@ -228,6 +239,7 @@ func Shutdown() {
 	in.Close()
 }
 
+// Synchronizes the internal back buffer with the terminal.
 func Present() {
 	// invalidate cursor position
 	lastx = coord_invalid
@@ -259,6 +271,7 @@ func Present() {
 	flush()
 }
 
+// Sets the position of the cursor. See also HideCursor().
 func SetCursor(x, y int) {
 	if is_cursor_hidden(cursor_x, cursor_y) && !is_cursor_hidden(x, y) {
 		outbuf.WriteString(funcs[t_show_cursor])
@@ -274,10 +287,12 @@ func SetCursor(x, y int) {
 	}
 }
 
+// The shortcut for SetCursor(-1, -1).
 func HideCursor() {
 	SetCursor(cursor_hidden, cursor_hidden)
 }
 
+// Puts the 'cell' into the internal back buffer at the specified position.
 func PutCell(x, y int, cell *Cell) {
 	if x < 0 || x >= back_buffer.width {
 		return
@@ -289,11 +304,22 @@ func PutCell(x, y int, cell *Cell) {
 	back_buffer.cells[y*back_buffer.width+x] = *cell
 }
 
+// Changes cell's parameters in the internal back buffer at the specified
+// position.
 func ChangeCell(x, y int, ch rune, fg, bg Attribute) {
 	var c = Cell{ch, fg, bg}
 	PutCell(x, y, &c)
 }
 
+// 'Blit' function copies the 'cells' buffer to the internal back buffer at the
+// position specified by 'x' and 'y'. Blit doesn't perform any kind of cuts and
+// if contents of the cells buffer cannot be placed without crossing back
+// buffer's boundaries, the operation is discarded. Parameter 'w' must be > 0,
+// otherwise it will cause "division by zero" panic.
+//
+// The width and the height of the 'cells' buffer are calculated that way:
+//      w := w
+//      h := len(cells) / w
 func Blit(x, y, w int, cells []Cell) {
 	h := len(cells) / w
 	if x+w > back_buffer.width || x < 0 {
@@ -316,6 +342,7 @@ func Blit(x, y, w int, cells []Cell) {
 	}
 }
 
+// Wait for an event and return it. This is a blocking function call.
 func PollEvent() Event {
 	var event Event
 
@@ -342,10 +369,13 @@ func PollEvent() Event {
 	panic("unreachable")
 }
 
+// Returns the size of the internal back buffer (which is the same as
+// terminal's window size in characters).
 func Size() (int, int) {
 	return termw, termh
 }
 
+// Clears the internal back buffer.
 func Clear() {
 	select {
 	case <-sigwinch_draw:
@@ -355,6 +385,16 @@ func Clear() {
 	back_buffer.clear()
 }
 
+// Sets termbox input mode. Termbox has two input modes:
+//
+// 1. Esc input mode. When ESC sequence is in the buffer and it doesn't match
+// any known sequence. ESC means KeyEsc.
+//
+// 2. Alt input mode. When ESC sequence is in the buffer and it doesn't match
+// any known sequence. ESC enables ModAlt modifier for the next keyboard event.
+//
+// If 'mode' is InputCurrent, returns the current input mode. See also Input*
+// constants.
 func SetInputMode(mode InputMode) InputMode {
 	if mode != InputCurrent {
 		input_mode = mode
@@ -362,6 +402,7 @@ func SetInputMode(mode InputMode) InputMode {
 	return input_mode
 }
 
+// Set attributes which are used for clearing the internal back buffer.
 func SetClearAttributes(fg, bg Attribute) {
 	foreground, background = fg, bg
 }

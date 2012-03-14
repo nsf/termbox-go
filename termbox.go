@@ -128,6 +128,7 @@ func get_term_size(fd uintptr) (int, int) {
 }
 
 func send_attr(fg, bg Attribute) {
+	// TODO: implement ColorDefault
 	if fg != lastfg || bg != lastbg {
 		outbuf.WriteString(funcs[t_sgr0])
 		// TODO: get rid of fprintf
