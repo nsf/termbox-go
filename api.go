@@ -133,7 +133,7 @@ const (
 	AttrUnderline Attribute = 0x20
 )
 
-// Input mode. See SelectInputMode function.
+// Input mode. See SetInputMode function.
 const (
 	InputCurrent InputMode = iota
 	InputEsc
@@ -310,35 +310,14 @@ func ChangeCell(x, y int, ch rune, fg, bg Attribute) {
 	PutCell(x, y, &c)
 }
 
-// 'Blit' function copies the 'cells' buffer to the internal back buffer at the
-// position specified by 'x' and 'y'. Blit doesn't perform any kind of cuts and
-// if contents of the cells buffer cannot be placed without crossing back
-// buffer's boundaries, the operation is discarded. Parameter 'w' must be > 0,
-// otherwise it will cause "division by zero" panic.
+// Returns a slice of the termbox back buffer. You can get its dimensions using
+// 'Size' function. The slice remains valid as long as no 'Clear' or 'Present'
+// function calls were made after call to this function.
 //
-// The width and the height of the 'cells' buffer are calculated that way:
-//      w := w
-//      h := len(cells) / w
-func Blit(x, y, w int, cells []Cell) {
-	h := len(cells) / w
-	if x+w > back_buffer.width || x < 0 {
-		return
-	}
-	if y+h > back_buffer.height || y < 0 {
-		return
-	}
-
-	dsti := y * back_buffer.width + x
-	srci := 0
-
-	src := cells
-	dst := back_buffer.cells
-
-	for i := 0; i < h; i++ {
-		copy(dst[dsti:dsti+w], src[srci:srci+w])
-		dsti += back_buffer.width
-		srci += w
-	}
+// The function is provided for performance reasons, normally it is suggested to
+// use 'ChangeCell' or 'PutCell'.
+func CellBuffer() []Cell {
+	return back_buffer.cells
 }
 
 // Wait for an event and return it. This is a blocking function call.
