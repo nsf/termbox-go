@@ -6,7 +6,7 @@ import "bytes"
 import "syscall"
 import "unsafe"
 import "strings"
-import "fmt"
+import "strconv"
 import "os"
 import "io"
 
@@ -18,12 +18,10 @@ const (
 	t_show_cursor
 	t_hide_cursor
 	t_clear_screen
-	t_sgr
 	t_sgr0
 	t_underline
 	t_bold
 	t_blink
-	t_move_cursor
 	t_enter_keypad
 	t_exit_keypad
 )
@@ -61,7 +59,36 @@ var (
 	sigwinch_input = make(chan os.Signal, 1)
 	sigwinch_draw  = make(chan os.Signal, 1)
 	input_comm     = make(chan []byte)
+	intbuf         = make([]byte, 0, 16)
 )
+
+func write_cursor(x, y int) {
+	outbuf.WriteString("\033[")
+	outbuf.Write(strconv.AppendUint(intbuf, uint64(y+1), 10))
+	outbuf.WriteString(";")
+	outbuf.Write(strconv.AppendUint(intbuf, uint64(x+1), 10))
+	outbuf.WriteString("H")
+}
+
+func write_sgr_fg(a Attribute) {
+	outbuf.WriteString("\033[3")
+	outbuf.Write(strconv.AppendUint(intbuf, uint64(a), 10))
+	outbuf.WriteString("m")
+}
+
+func write_sgr_bg(a Attribute) {
+	outbuf.WriteString("\033[4")
+	outbuf.Write(strconv.AppendUint(intbuf, uint64(a), 10))
+	outbuf.WriteString("m")
+}
+
+func write_sgr(fg, bg Attribute) {
+	outbuf.WriteString("\033[3")
+	outbuf.Write(strconv.AppendUint(intbuf, uint64(fg), 10))
+	outbuf.WriteString(";4")
+	outbuf.Write(strconv.AppendUint(intbuf, uint64(bg), 10))
+	outbuf.WriteString("m")
+}
 
 type cellbuf struct {
 	width  int
@@ -128,11 +155,20 @@ func get_term_size(fd uintptr) (int, int) {
 }
 
 func send_attr(fg, bg Attribute) {
-	// TODO: implement ColorDefault
 	if fg != lastfg || bg != lastbg {
 		outbuf.WriteString(funcs[t_sgr0])
-		// TODO: get rid of fprintf
-		fmt.Fprintf(&outbuf, funcs[t_sgr], fg&0x0F, bg&0x0F)
+		fgcol := fg&0x0F
+		bgcol := bg&0x0F
+		if fgcol != ColorDefault {
+			if bgcol != ColorDefault {
+				write_sgr(fgcol, bgcol)
+			} else {
+				write_sgr_fg(fgcol)
+			}
+		} else if bgcol != ColorDefault {
+			write_sgr_bg(bgcol)
+		}
+
 		if fg&AttrBold != 0 {
 			outbuf.WriteString(funcs[t_bold])
 		}
@@ -151,7 +187,7 @@ func send_char(x, y int, ch rune) {
 	var buf [8]byte
 	n := utf8.EncodeRune(buf[:], ch)
 	if x-1 != lastx || y != lasty {
-		fmt.Fprintf(&outbuf, funcs[t_move_cursor], y+1, x+1) // TODO: get rid of fprintf
+		write_cursor(x, y)
 	}
 	lastx, lasty = x, y
 	outbuf.Write(buf[:n])
@@ -170,7 +206,7 @@ func send_clear() {
 	send_attr(foreground, background)
 	outbuf.WriteString(funcs[t_clear_screen])
 	if !is_cursor_hidden(cursor_x, cursor_y) {
-		fmt.Fprintf(&outbuf, funcs[t_move_cursor], cursor_y+1, cursor_x+1)
+		write_cursor(cursor_x, cursor_y)
 	}
 	flush()
 

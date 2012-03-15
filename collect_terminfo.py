@@ -57,12 +57,10 @@ funcs = [
 	"T_SHOW_CURSOR",	"cnorm",
 	"T_HIDE_CURSOR",	"civis",
 	"T_CLEAR_SCREEN",	"clear",
-	"T_SGR",		"sgr",
 	"T_SGR0",		"sgr0",
 	"T_UNDERLINE",		"smul",
 	"T_BOLD",		"bold",
 	"T_BLINK",		"blink",
-	"T_MOVE_CURSOR",	"cup",
 	"T_ENTER_KEYPAD",	"smkx",
 	"T_EXIT_KEYPAD",	"rmkx"
 ]
@@ -93,7 +91,7 @@ def do_term(term, nick):
 	w("\n}\n\n")
 
 def do_terms(d):
-	w("var terms = []struct{\n")
+	w("var terms = []struct {\n")
 	w("\tname  string\n")
 	w("\tkeys  []string\n")
 	w("\tfuncs []string\n")

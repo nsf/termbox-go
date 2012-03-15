@@ -1,6 +1,5 @@
 package termbox
 
-import "fmt"
 import "os"
 import "os/signal"
 import "syscall"
@@ -266,7 +265,7 @@ func Present() {
 		}
 	}
 	if !is_cursor_hidden(cursor_x, cursor_y) {
-		fmt.Fprintf(&outbuf, funcs[t_move_cursor], cursor_y+1, cursor_x+1)
+		write_cursor(cursor_x, cursor_y)
 	}
 	flush()
 }
@@ -283,7 +282,7 @@ func SetCursor(x, y int) {
 
 	cursor_x, cursor_y = x, y
 	if !is_cursor_hidden(cursor_x, cursor_y) {
-		fmt.Fprintf(&outbuf, funcs[t_move_cursor], cursor_y+1, cursor_y+1)
+		write_cursor(cursor_x, cursor_y)
 	}
 }
 
