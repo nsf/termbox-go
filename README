@@ -1,1 +1,8 @@
 Native Go implementation of the termbox library. Beta.
+
+TODO:
+
+- Fix darwin/freebsd/openbsd/netbsd build. At the moment termbox uses
+  syscall.Termios structure which is not defined on these OSes. So it needs to
+  be redefined manually. This plus a couple of other constants. Oh, and winsize
+  structure too for TIOCGWINSZ ioctl function.
