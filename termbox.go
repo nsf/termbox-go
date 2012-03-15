@@ -58,7 +58,7 @@ var (
 	background     = ColorBlack
 	inbuf          = make([]byte, 0, 64)
 	outbuf         bytes.Buffer
-	sigwinch_input = make(chan os.Signal, 10)
+	sigwinch_input = make(chan os.Signal, 1)
 	sigwinch_draw  = make(chan os.Signal, 1)
 	input_comm     = make(chan []byte)
 )
