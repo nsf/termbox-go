@@ -38,7 +38,7 @@ var (
 	funcs []string
 
 	// termbox inner state
-	orig_tios      syscall.Termios
+	orig_tios      syscall_Termios
 	back_buffer    cellbuf
 	front_buffer   cellbuf
 	termw          int
@@ -227,18 +227,18 @@ func update_size() {
 	send_clear()
 }
 
-func tcsetattr(fd uintptr, termios *syscall.Termios) error {
+func tcsetattr(fd uintptr, termios *syscall_Termios) error {
 	r, _, e := syscall.Syscall(syscall.SYS_IOCTL,
-		fd, uintptr(syscall.TCSETS), uintptr(unsafe.Pointer(termios)))
+		fd, uintptr(syscall_TCSETS), uintptr(unsafe.Pointer(termios)))
 	if r != 0 {
 		return os.NewSyscallError("SYS_IOCTL", e)
 	}
 	return nil
 }
 
-func tcgetattr(fd uintptr, termios *syscall.Termios) error {
+func tcgetattr(fd uintptr, termios *syscall_Termios) error {
 	r, _, e := syscall.Syscall(syscall.SYS_IOCTL,
-		fd, uintptr(syscall.TCGETS), uintptr(unsafe.Pointer(termios)))
+		fd, uintptr(syscall_TCGETS), uintptr(unsafe.Pointer(termios)))
 	if r != 0 {
 		return os.NewSyscallError("SYS_IOCTL", e)
 	}
