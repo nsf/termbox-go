@@ -1,3 +1,5 @@
+// +build !windows
+
 package termbox
 
 import "unicode/utf8"
@@ -29,7 +31,6 @@ const (
 const (
 	coord_invalid = -2
 	attr_invalid  = Attribute(0xFFFF)
-	cursor_hidden = -1
 )
 
 var (
@@ -52,8 +53,8 @@ var (
 	lasty          = coord_invalid
 	cursor_x       = cursor_hidden
 	cursor_y       = cursor_hidden
-	foreground     = ColorWhite
-	background     = ColorBlack
+	foreground     = ColorDefault
+	background     = ColorDefault
 	inbuf          = make([]byte, 0, 64)
 	outbuf         bytes.Buffer
 	sigwinch_input = make(chan os.Signal, 1)
@@ -90,56 +91,6 @@ func write_sgr(fg, bg Attribute) {
 	outbuf.WriteString("m")
 }
 
-type cellbuf struct {
-	width  int
-	height int
-	cells  []Cell
-}
-
-func (this *cellbuf) init(width, height int) {
-	this.width = width
-	this.height = height
-	this.cells = make([]Cell, width*height)
-}
-
-func (this *cellbuf) resize(width, height int) {
-	if this.width == width && this.height == height {
-		return
-	}
-
-	oldw := this.width
-	oldh := this.height
-	oldcells := this.cells
-
-	this.init(width, height)
-	this.clear()
-
-	minw, minh := oldw, oldh
-
-	if width < minw {
-		minw = width
-	}
-	if height < minh {
-		minh = height
-	}
-
-	for i := 0; i < minh; i++ {
-		srco, dsto := i*oldw, i*width
-		src := oldcells[srco : srco+minw]
-		dst := this.cells[dsto : dsto+minw]
-		copy(dst, src)
-	}
-}
-
-func (this *cellbuf) clear() {
-	for i := range this.cells {
-		c := &this.cells[i]
-		c.Ch = ' '
-		c.Fg = foreground
-		c.Bg = background
-	}
-}
-
 type winsize struct {
 	rows    uint16
 	cols    uint16
@@ -157,8 +108,8 @@ func get_term_size(fd uintptr) (int, int) {
 func send_attr(fg, bg Attribute) {
 	if fg != lastfg || bg != lastbg {
 		outbuf.WriteString(funcs[t_sgr0])
-		fgcol := fg&0x0F
-		bgcol := bg&0x0F
+		fgcol := fg & 0x0F
+		bgcol := bg & 0x0F
 		if fgcol != ColorDefault {
 			if bgcol != ColorDefault {
 				write_sgr(fgcol, bgcol)
@@ -191,10 +142,6 @@ func send_char(x, y int, ch rune) {
 	}
 	lastx, lasty = x, y
 	outbuf.Write(buf[:n])
-}
-
-func is_cursor_hidden(x, y int) bool {
-	return x == -1 || y == -1
 }
 
 func flush() {

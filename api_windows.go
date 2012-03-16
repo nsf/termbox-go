@@ -1,9 +1,5 @@
-// +build !windows
-
 package termbox
 
-import "os"
-import "os/signal"
 import "syscall"
 
 // public API
@@ -18,70 +14,37 @@ import "syscall"
 //      }
 //      defer termbox.Shutdown()
 func Init() error {
-	// TODO: try os.Stdin and os.Stdout directly
 	var err error
 
-	// os.Create is confusing here, but it's just a shortcut for 'open'
-	out, err = os.Create("/dev/tty")
+	in, err = syscall.GetStdHandle(syscall.STD_INPUT_HANDLE)
 	if err != nil {
 		return err
 	}
-	in, err = os.Open("/dev/tty")
-	if err != nil {
-		return err
-	}
-
-	err = setup_term()
+	out, err = syscall.GetStdHandle(syscall.STD_OUTPUT_HANDLE)
 	if err != nil {
 		return err
 	}
 
-	// we set two signal handlers, because input/output are not really
-	// connected, but they both need to be aware of window size changes
-	signal.Notify(sigwinch_input, syscall.SIGWINCH)
-	signal.Notify(sigwinch_draw, syscall.SIGWINCH)
+	show_cursor(false)
 
-	err = tcgetattr(out.Fd(), &orig_tios)
-	if err != nil {
-		return err
-	}
-
-	tios := orig_tios
-	tios.Iflag &^= syscall_IGNBRK | syscall_BRKINT | syscall_PARMRK |
-		syscall_ISTRIP | syscall_INLCR | syscall_IGNCR |
-		syscall_ICRNL | syscall_IXON
-	tios.Oflag &^= syscall_OPOST
-	tios.Lflag &^= syscall_ECHO | syscall_ECHONL | syscall_ICANON |
-		syscall_ISIG | syscall_IEXTEN
-	tios.Cflag &^= syscall_CSIZE | syscall_PARENB
-	tios.Cflag |= syscall_CS8
-	tios.Cc[syscall_VMIN] = 1
-	tios.Cc[syscall_VTIME] = 0
-
-	err = tcsetattr(out.Fd(), &tios)
-	if err != nil {
-		return err
-	}
-
-	out.WriteString(funcs[t_enter_ca])
-	out.WriteString(funcs[t_enter_keypad])
-	out.WriteString(funcs[t_hide_cursor])
-	out.WriteString(funcs[t_clear_screen])
-
-	termw, termh = get_term_size(out.Fd())
+	termw, termh = get_term_size(out)
 	back_buffer.init(termw, termh)
-	front_buffer.init(termw, termh)
 	back_buffer.clear()
-	front_buffer.clear()
 
-	go func() {
-		buf := make([]byte, 128)
-		for {
-			n, _ := in.Read(buf)
-			input_comm <- buf[:n]
-			buf = (<-input_comm)[:128]
-		}
-	}()
+	attrsbuf = make([]word, termw*termh)
+	wcharbuf = make([]wchar, termw*termh)
+
+	err = get_console_mode(in, &orig_mode)
+	if err != nil {
+		return err
+	}
+
+	err = set_console_mode(in, enable_window_input)
+	if err != nil {
+		return err
+	}
+
+	go input_event_producer()
 
 	return nil
 }
@@ -89,62 +52,31 @@ func Init() error {
 // Finalizes termbox library, should be called after successful initialization
 // when termbox's functionality isn't required anymore.
 func Shutdown() {
-	out.WriteString(funcs[t_show_cursor])
-	out.WriteString(funcs[t_sgr0])
-	out.WriteString(funcs[t_clear_screen])
-	out.WriteString(funcs[t_exit_ca])
-	out.WriteString(funcs[t_exit_keypad])
-	tcsetattr(out.Fd(), &orig_tios)
-
-	out.Close()
-	in.Close()
+	set_console_mode(in, orig_mode)
 }
 
 // Synchronizes the internal back buffer with the terminal.
 func Present() {
-	// invalidate cursor position
-	lastx = coord_invalid
-	lasty = coord_invalid
-
-	select {
-	case <-sigwinch_draw:
-		update_size()
-	default:
-	}
-
-	for y := 0; y < front_buffer.height; y++ {
-		line_offset := y * front_buffer.width
-		for x := 0; x < front_buffer.width; x++ {
-			cell_offset := line_offset + x
-			back := &back_buffer.cells[cell_offset]
-			front := &front_buffer.cells[cell_offset]
-			if *back == *front {
-				continue
-			}
-			send_attr(back.Fg, back.Bg)
-			send_char(x, y, back.Ch)
-			*front = *back
-		}
-	}
-	if !is_cursor_hidden(cursor_x, cursor_y) {
-		write_cursor(cursor_x, cursor_y)
-	}
-	flush()
+	update_size_maybe()
+	encode_attrs()
+	encode_runes()
+	write_console_output_attribute(out, attrsbuf, termw*termh, coord{0, 0}, nil)
+	write_console_output_character(out, wcharbuf, termw*termh, coord{0, 0}, nil)
 }
 
 // Sets the position of the cursor. See also HideCursor().
 func SetCursor(x, y int) {
 	if is_cursor_hidden(cursor_x, cursor_y) && !is_cursor_hidden(x, y) {
-		outbuf.WriteString(funcs[t_show_cursor])
+		show_cursor(true)
 	}
 
 	if !is_cursor_hidden(cursor_x, cursor_y) && is_cursor_hidden(x, y) {
-		outbuf.WriteString(funcs[t_hide_cursor])
+		show_cursor(false)
 	}
 
 	cursor_x, cursor_y = x, y
 	if !is_cursor_hidden(cursor_x, cursor_y) {
-		write_cursor(cursor_x, cursor_y)
+		move_cursor(cursor_x, cursor_y)
 	}
 }
 
@@ -184,29 +116,7 @@ func CellBuffer() []Cell {
 
 // Wait for an event and return it. This is a blocking function call.
 func PollEvent() Event {
-	var event Event
-
-	// try to extract event from input buffer, return on success
-	event.Type = EventKey
-	if extract_event(&event) {
-		return event
-	}
-
-	for {
-		select {
-		case data := <-input_comm:
-			inbuf = append(inbuf, data...)
-			input_comm <- data
-			if extract_event(&event) {
-				return event
-			}
-		case <-sigwinch_input:
-			event.Type = EventResize
-			event.Width, event.Height = get_term_size(out.Fd())
-			return event
-		}
-	}
-	panic("unreachable")
+	return <-input_comm
 }
 
 // Returns the size of the internal back buffer (which is the same as
@@ -217,11 +127,7 @@ func Size() (int, int) {
 
 // Clears the internal back buffer.
 func Clear() {
-	select {
-	case <-sigwinch_draw:
-		update_size()
-	default:
-	}
+	update_size_maybe()
 	back_buffer.clear()
 }
 
