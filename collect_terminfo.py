@@ -100,7 +100,7 @@ def do_terms(d):
 		w('\t{"%s", %s_keys, %s_funcs},\n' % (k, v, v))
 	w("}\n\n")
 
-w("package termbox\n\n")
+w("// +build !windows\n\npackage termbox\n\n")
 
 for k,v in terminals.items():
 	do_term(k, v)
