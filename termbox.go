@@ -57,8 +57,7 @@ var (
 	background     = ColorDefault
 	inbuf          = make([]byte, 0, 64)
 	outbuf         bytes.Buffer
-	sigwinch_input = make(chan os.Signal, 1)
-	sigwinch_draw  = make(chan os.Signal, 1)
+	sigwinch       = make(chan os.Signal, 1)
 	input_comm     = make(chan []byte)
 	intbuf         = make([]byte, 0, 16)
 )
@@ -166,12 +165,15 @@ func send_clear() {
 	lasty = coord_invalid
 }
 
-func update_size() {
-	termw, termh = get_term_size(out.Fd())
-	back_buffer.resize(termw, termh)
-	front_buffer.resize(termw, termh)
-	front_buffer.clear()
-	send_clear()
+func update_size_maybe() {
+	w, h := get_term_size(out.Fd())
+	if w != termw || h != termh {
+		termw, termh = w, h
+		back_buffer.resize(termw, termh)
+		front_buffer.resize(termw, termh)
+		front_buffer.clear()
+		send_clear()
+	}
 }
 
 func tcsetattr(fd uintptr, termios *syscall_Termios) error {

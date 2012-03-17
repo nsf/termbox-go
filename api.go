@@ -38,8 +38,7 @@ func Init() error {
 
 	// we set two signal handlers, because input/output are not really
 	// connected, but they both need to be aware of window size changes
-	signal.Notify(sigwinch_input, syscall.SIGWINCH)
-	signal.Notify(sigwinch_draw, syscall.SIGWINCH)
+	signal.Notify(sigwinch, syscall.SIGWINCH)
 
 	err = tcgetattr(out.Fd(), &orig_tios)
 	if err != nil {
@@ -106,11 +105,7 @@ func Present() {
 	lastx = coord_invalid
 	lasty = coord_invalid
 
-	select {
-	case <-sigwinch_draw:
-		update_size()
-	default:
-	}
+	update_size_maybe()
 
 	for y := 0; y < front_buffer.height; y++ {
 		line_offset := y * front_buffer.width
@@ -200,7 +195,7 @@ func PollEvent() Event {
 			if extract_event(&event) {
 				return event
 			}
-		case <-sigwinch_input:
+		case <-sigwinch:
 			event.Type = EventResize
 			event.Width, event.Height = get_term_size(out.Fd())
 			return event
@@ -217,11 +212,7 @@ func Size() (int, int) {
 
 // Clears the internal back buffer.
 func Clear() {
-	select {
-	case <-sigwinch_draw:
-		update_size()
-	default:
-	}
+	update_size_maybe()
 	back_buffer.clear()
 }
 
