@@ -3,3 +3,5 @@ Native Go implementation of the termbox library. Beta.
 TODO:
 
 - Add other OSes to handle termios stuff. See syscalls.go godefs template file.
+- Write documentation. Need to mention how termbox-based apps can be used under
+  putty (common case?).
