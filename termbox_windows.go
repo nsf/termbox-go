@@ -2,7 +2,6 @@ package termbox
 
 import "syscall"
 import "unsafe"
-import "unicode/utf16"
 
 type (
 	wchar uint16
@@ -63,6 +62,8 @@ var (
 	proc_read_console_input             = kernel32.NewProc("ReadConsoleInputW")
 	proc_get_console_mode               = kernel32.NewProc("GetConsoleMode")
 	proc_set_console_mode               = kernel32.NewProc("SetConsoleMode")
+	proc_fill_console_output_character  = kernel32.NewProc("FillConsoleOutputCharacterW")
+	proc_fill_console_output_attribute  = kernel32.NewProc("FillConsoleOutputAttribute")
 )
 
 func get_console_screen_buffer_info(h syscall.Handle, info *console_screen_buffer_info) (err error) {
@@ -78,10 +79,10 @@ func get_console_screen_buffer_info(h syscall.Handle, info *console_screen_buffe
 	return
 }
 
-func write_console_output_character(h syscall.Handle, chars []wchar, n int, pos coord, written *dword) (err error) {
+func write_console_output_character(h syscall.Handle, chars []wchar, pos coord, written *dword) (err error) {
 	r0, _, e1 := syscall.Syscall6(proc_write_console_output_character.Addr(),
-		5, uintptr(h), uintptr(unsafe.Pointer(&chars[0])), uintptr(n), pos.uintptr(),
-		uintptr(unsafe.Pointer(written)), 0)
+		5, uintptr(h), uintptr(unsafe.Pointer(&chars[0])), uintptr(len(chars)),
+		pos.uintptr(), uintptr(unsafe.Pointer(written)), 0)
 	if int(r0) == 0 {
 		if e1 != 0 {
 			err = error(e1)
@@ -92,10 +93,10 @@ func write_console_output_character(h syscall.Handle, chars []wchar, n int, pos 
 	return
 }
 
-func write_console_output_attribute(h syscall.Handle, attrs []word, n int, pos coord, written *dword) (err error) {
+func write_console_output_attribute(h syscall.Handle, attrs []word, pos coord, written *dword) (err error) {
 	r0, _, e1 := syscall.Syscall6(proc_write_console_output_attribute.Addr(),
-		5, uintptr(h), uintptr(unsafe.Pointer(&attrs[0])), uintptr(n), pos.uintptr(),
-		uintptr(unsafe.Pointer(written)), 0)
+		5, uintptr(h), uintptr(unsafe.Pointer(&attrs[0])), uintptr(len(attrs)),
+		pos.uintptr(), uintptr(unsafe.Pointer(written)), 0)
 	if int(r0) == 0 {
 		if e1 != 0 {
 			err = error(e1)
@@ -133,9 +134,8 @@ func set_console_cursor_position(h syscall.Handle, pos coord) (err error) {
 }
 
 func read_console_input(h syscall.Handle, record *input_record) (err error) {
-	var read dword // required, it fails without it
 	r0, _, e1 := syscall.Syscall6(proc_read_console_input.Addr(),
-		4, uintptr(h), uintptr(unsafe.Pointer(record)), 1, uintptr(unsafe.Pointer(&read)), 0, 0)
+		4, uintptr(h), uintptr(unsafe.Pointer(record)), 1, uintptr(unsafe.Pointer(&tmp_arg)), 0, 0)
 	if int(r0) == 0 {
 		if e1 != 0 {
 			err = error(e1)
@@ -172,30 +172,74 @@ func set_console_mode(h syscall.Handle, mode dword) (err error) {
 	return
 }
 
+func fill_console_output_character(h syscall.Handle, char wchar, n int) (err error) {
+	r0, _, e1 := syscall.Syscall6(proc_fill_console_output_character.Addr(),
+		5, uintptr(h), uintptr(char), uintptr(n), tmp_coord.uintptr(),
+		uintptr(unsafe.Pointer(&tmp_arg)), 0)
+	if int(r0) == 0 {
+		if e1 != 0 {
+			err = error(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return
+}
+
+func fill_console_output_attribute(h syscall.Handle, attr word, n int) (err error) {
+	r0, _, e1 := syscall.Syscall6(proc_fill_console_output_attribute.Addr(),
+		5, uintptr(h), uintptr(attr), uintptr(n), tmp_coord.uintptr(),
+		uintptr(unsafe.Pointer(&tmp_arg)), 0)
+	if int(r0) == 0 {
+		if e1 != 0 {
+			err = error(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return
+}
+
+type diff_msg struct {
+	pos coord
+	attrs []word
+	chars []wchar
+}
+
 var (
-	orig_mode   dword
-	back_buffer cellbuf
-	termw       int
-	termh       int
-	input_mode  = InputEsc
-	cursor_x    = cursor_hidden
-	cursor_y    = cursor_hidden
-	foreground  = ColorDefault
-	background  = ColorDefault
-	in          syscall.Handle
-	out         syscall.Handle
-	attrsbuf    []word
-	wcharbuf    []wchar
-	input_comm  = make(chan Event)
+	orig_mode    dword
+	back_buffer  cellbuf
+	front_buffer cellbuf
+	termw        int
+	termh        int
+	input_mode   = InputEsc
+	cursor_x     = cursor_hidden
+	cursor_y     = cursor_hidden
+	foreground   = ColorDefault
+	background   = ColorDefault
+	in           syscall.Handle
+	out          syscall.Handle
+	attrsbuf     []word
+	charsbuf     []wchar
+	diffbuf      []diff_msg
+	beg_x        = -1
+	beg_y        = -1
+	beg_i        = -1
+	input_comm   = make(chan Event)
+	alt_mode_esc = false
+
+	// these ones just to prevent heap allocs at all costs
+	tmp_info  console_screen_buffer_info
+	tmp_arg   dword
+	tmp_coord = coord{0,0}
 )
 
 func get_term_size(out syscall.Handle) (int, int) {
-	var info console_screen_buffer_info
-	err := get_console_screen_buffer_info(out, &info)
+	err := get_console_screen_buffer_info(out, &tmp_info)
 	if err != nil {
 		panic(err)
 	}
-	return int(info.size.x), int(info.size.y)
+	return int(tmp_info.size.x), int(tmp_info.size.y)
 }
 
 func update_size_maybe() {
@@ -203,13 +247,16 @@ func update_size_maybe() {
 	if w != termw || h != termh {
 		termw, termh = w, h
 		back_buffer.resize(termw, termh)
+		front_buffer.resize(termw, termh)
+		front_buffer.clear()
+		clear()
 
 		size := termw * termh
 		if cap(attrsbuf) < size {
-			attrsbuf = make([]word, size)
+			attrsbuf = make([]word, 0, size)
 		}
-		if cap(wcharbuf) < size {
-			wcharbuf = make([]wchar, size)
+		if cap(charsbuf) < size {
+			charsbuf = make([]wchar, 0, size)
 		}
 	}
 }
@@ -238,30 +285,6 @@ var color_table_fg = []word{
 	foreground_red | foreground_blue | foreground_green, // default (white)
 }
 
-// encodes all attributes in the back buffer to winapi format and places them to
-// attrsbuf
-func encode_attrs() {
-	n := len(back_buffer.cells)
-	if cap(attrsbuf) < n {
-		attrsbuf = make([]word, n)
-	} else {
-		attrsbuf = attrsbuf[:n]
-	}
-
-	for i, cell := range back_buffer.cells {
-		attr := color_table_fg[cell.Fg&0x0F] |
-			color_table_bg[cell.Bg&0x0F]
-		if cell.Fg&AttrBold != 0 {
-			attr |= foreground_intensity
-		}
-		if cell.Bg&AttrBold != 0 {
-			attr |= background_intensity
-		}
-
-		attrsbuf[i] = attr
-	}
-}
-
 const (
 	replacement_char = '\uFFFD'
 	max_rune         = '\U0010FFFF'
@@ -271,38 +294,75 @@ const (
 	surr_self        = 0x10000
 )
 
-// encodes all runes in the back buffer to utf16 and places them to wcharbuf
-func encode_runes() {
-	n := len(back_buffer.cells)
-	for _, cell := range back_buffer.cells {
-		if cell.Ch >= surr_self {
-			n++
+// compares 'back_buffer' with 'front_buffer' and prepares all changes in the form of
+// 'diff_msg's in the 'diff_buf'
+func prepare_diff_messages() {
+	// clear buffers
+	attrsbuf = attrsbuf[:0]
+	charsbuf = charsbuf[:0]
+	diffbuf = diffbuf[:0]
+	beg_x = -1
+
+	for y := 0; y < front_buffer.height; y++ {
+		line_offset := y * front_buffer.width
+		for x := 0; x < front_buffer.width; x++ {
+			cell_offset := line_offset + x
+			back := &back_buffer.cells[cell_offset]
+			front := &front_buffer.cells[cell_offset]
+			if *back != *front {
+				// have diff
+				if beg_x == -1 {
+					// no started sequence, start one
+					beg_x, beg_y = x, y
+					beg_i = len(charsbuf)
+				}
+				attr, char := cell_to_char_info(*back)
+				attrsbuf = append(attrsbuf, attr)
+				charsbuf = append(charsbuf, char)
+				*front = *back
+			} else {
+				if beg_x != -1 {
+					// there is a sequence in progress,
+					// commit it
+					diffbuf = append(diffbuf, diff_msg{
+						coord{short(beg_x), short(beg_y)},
+						attrsbuf[beg_i:],
+						charsbuf[beg_i:],
+					})
+					beg_x = -1
+				}
+			}
 		}
 	}
 
-	if cap(wcharbuf) < n {
-		wcharbuf = make([]wchar, n)
-	} else {
-		wcharbuf = wcharbuf[:n]
+	if beg_x != -1 {
+		// there is a sequence in progress,
+		// commit it
+		diffbuf = append(diffbuf, diff_msg{
+			coord{short(beg_x), short(beg_y)},
+			attrsbuf[beg_i:],
+			charsbuf[beg_i:],
+		})
+	}
+}
+
+func cell_to_char_info(c Cell) (attr word, unicode_char wchar) {
+	attr = color_table_fg[c.Fg&0x0F] | color_table_bg[c.Bg&0x0F]
+	if c.Fg&AttrBold != 0 {
+		attr |= foreground_intensity
+	}
+	if c.Bg&AttrBold != 0 {
+		attr |= background_intensity
 	}
 
-	n = 0
-	for _, cell := range back_buffer.cells {
-		v := cell.Ch
-		switch {
-		case v < 0, surr1 <= v && v < surr3, v > max_rune:
-			v = replacement_char
-			fallthrough
-		case v < surr_self:
-			wcharbuf[n] = wchar(v)
-			n++
-		default:
-			r1, r2 := utf16.EncodeRune(v)
-			wcharbuf[n] = wchar(r1)
-			wcharbuf[n+1] = wchar(r2)
-			n += 2
-		}
+	switch ch := c.Ch; {
+	case ch < 0, surr1 <= ch && ch < surr3, ch >= surr_self:
+		unicode_char = replacement_char
+	default:
+		unicode_char = wchar(ch)
 	}
+
+	return
 }
 
 func move_cursor(x, y int) {
@@ -327,6 +387,24 @@ func show_cursor(visible bool) {
 	}
 }
 
+func clear() {
+	var err error
+	attr, char := cell_to_char_info(Cell{
+		' ',
+		foreground,
+		background,
+	})
+
+	err = fill_console_output_attribute(out, attr, termw*termh)
+	if err != nil {
+		panic(err)
+	}
+	err = fill_console_output_character(out, char, termw*termh)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func key_event_record_to_event(r *key_event_record) (Event, bool) {
 	if r.key_down == 0 {
 		return Event{}, false
@@ -334,10 +412,16 @@ func key_event_record_to_event(r *key_event_record) (Event, bool) {
 
 	e := Event{Type: EventKey}
 	if input_mode == InputAlt {
+		if alt_mode_esc {
+			e.Mod = ModAlt
+			alt_mode_esc = false
+		}
 		if r.control_key_state&(left_alt_pressed|right_alt_pressed) != 0 {
 			e.Mod = ModAlt
 		}
 	}
+
+	ctrlpressed := r.control_key_state&(left_ctrl_pressed|right_ctrl_pressed) != 0
 
 	if r.virtual_key_code >= vk_f1 && r.virtual_key_code <= vk_f12 {
 		switch r.virtual_key_code {
@@ -395,26 +479,65 @@ func key_event_record_to_event(r *key_event_record) (Event, bool) {
 		case vk_arrow_right:
 			e.Key = KeyArrowRight
 		case vk_backspace:
-			e.Key = KeyBackspace
+			if ctrlpressed {
+				e.Key = KeyBackspace2
+			} else {
+				e.Key = KeyBackspace
+			}
 		case vk_tab:
 			e.Key = KeyTab
 		case vk_enter:
 			e.Key = KeyEnter
 		case vk_esc:
-			e.Key = KeyEsc
+			switch input_mode {
+			case InputEsc:
+				e.Key = KeyEsc
+			case InputAlt:
+				alt_mode_esc = true
+				return Event{}, false
+			}
 		case vk_space:
 			e.Key = KeySpace
-		default:
-			goto keep_matching
 		}
 
-		return e, true
+		if e.Key != 0 {
+			return e, true
+		}
 	}
 
-keep_matching:
-	if r.control_key_state&(left_ctrl_pressed|right_ctrl_pressed) != 0 {
-		if Key(r.unicode_char) >= KeyCtrlA && Key(r.unicode_char) <= KeyCtrlZ {
+	if ctrlpressed {
+		if Key(r.unicode_char) >= KeyCtrlA && Key(r.unicode_char) <= KeyCtrlRsqBracket {
 			e.Key = Key(r.unicode_char)
+			if input_mode == InputAlt && e.Key == KeyEsc {
+				alt_mode_esc = true
+				return Event{}, false
+			}
+			return e, true
+		}
+		switch r.virtual_key_code {
+		case 192, 50:
+			// manual return here, because KeyCtrl2 is zero
+			e.Key = KeyCtrl2
+			return e, true
+		case 51:
+			if input_mode == InputAlt {
+				alt_mode_esc = true
+				return Event{}, false
+			}
+			e.Key = KeyCtrl3
+		case 52:
+			e.Key = KeyCtrl4
+		case 53:
+			e.Key = KeyCtrl5
+		case 54:
+			e.Key = KeyCtrl6
+		case 189, 191, 55:
+			e.Key = KeyCtrl7
+		case 8, 56:
+			e.Key = KeyCtrl8
+		}
+
+		if e.Key != 0 {
 			return e, true
 		}
 	}

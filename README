@@ -3,4 +3,3 @@ Native Go implementation of the termbox library. Beta.
 TODO:
 
 - Add other OSes to handle termios stuff. See syscalls.go godefs template file.
-- Complete windows port. Some keys don't work and drawing is not perfect.

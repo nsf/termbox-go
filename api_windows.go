@@ -25,15 +25,6 @@ func Init() error {
 		return err
 	}
 
-	show_cursor(false)
-
-	termw, termh = get_term_size(out)
-	back_buffer.init(termw, termh)
-	back_buffer.clear()
-
-	attrsbuf = make([]word, termw*termh)
-	wcharbuf = make([]wchar, termw*termh)
-
 	err = get_console_mode(in, &orig_mode)
 	if err != nil {
 		return err
@@ -43,6 +34,19 @@ func Init() error {
 	if err != nil {
 		return err
 	}
+
+	show_cursor(false)
+
+	termw, termh = get_term_size(out)
+	back_buffer.init(termw, termh)
+	front_buffer.init(termw, termh)
+	back_buffer.clear()
+	front_buffer.clear()
+	clear()
+
+	attrsbuf = make([]word, 0, termw*termh)
+	charsbuf = make([]wchar, 0, termw*termh)
+	diffbuf = make([]diff_msg, 0, 32)
 
 	go input_event_producer()
 
@@ -58,10 +62,11 @@ func Shutdown() {
 // Synchronizes the internal back buffer with the terminal.
 func Present() {
 	update_size_maybe()
-	encode_attrs()
-	encode_runes()
-	write_console_output_attribute(out, attrsbuf, termw*termh, coord{0, 0}, nil)
-	write_console_output_character(out, wcharbuf, termw*termh, coord{0, 0}, nil)
+	prepare_diff_messages()
+	for _, msg := range diffbuf {
+		write_console_output_attribute(out, msg.attrs, msg.pos, nil)
+		write_console_output_character(out, msg.chars, msg.pos, nil)
+	}
 }
 
 // Sets the position of the cursor. See also HideCursor().
