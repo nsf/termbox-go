@@ -6,14 +6,14 @@ import "time"
 
 func draw() {
 	w, h := termbox.Size()
-	termbox.Clear()
+	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			termbox.ChangeCell(x, y, ' ', termbox.ColorWhite,
+			termbox.SetCell(x, y, ' ', termbox.ColorWhite,
 				termbox.Attribute(rand.Int() % 8))
 		}
 	}
-	termbox.Present()
+	termbox.Flush()
 }
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer termbox.Shutdown()
+	defer termbox.Close()
 
 	event_queue := make(chan termbox.Event)
 	go func() {

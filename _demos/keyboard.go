@@ -335,7 +335,7 @@ var func_combos = []combo{
 
 func print_tb(x, y int, fg, bg termbox.Attribute, msg string) {
 	for _, c := range msg {
-		termbox.ChangeCell(x, y, c, fg, bg)
+		termbox.SetCell(x, y, c, fg, bg)
 		x++
 	}
 }
@@ -347,33 +347,33 @@ func printf_tb(x, y int, fg, bg termbox.Attribute, format string, args ...interf
 
 func draw_key(k []key, fg, bg termbox.Attribute) {
 	for _, k := range k {
-		termbox.ChangeCell(k.x + 2, k.y + 4, k.ch, fg, bg)
+		termbox.SetCell(k.x + 2, k.y + 4, k.ch, fg, bg)
 	}
 }
 
 func draw_keyboard() {
-	termbox.ChangeCell(0, 0, 0x250C, termbox.ColorWhite, termbox.ColorBlack)
-	termbox.ChangeCell(79, 0, 0x2510, termbox.ColorWhite, termbox.ColorBlack)
-	termbox.ChangeCell(0, 23, 0x2514, termbox.ColorWhite, termbox.ColorBlack)
-	termbox.ChangeCell(79, 23, 0x2518, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(0, 0, 0x250C, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(79, 0, 0x2510, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(0, 23, 0x2514, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(79, 23, 0x2518, termbox.ColorWhite, termbox.ColorBlack)
 
 	for i := 1; i < 79; i++ {
-		termbox.ChangeCell(i, 0, 0x2500, termbox.ColorWhite, termbox.ColorBlack)
-		termbox.ChangeCell(i, 23, 0x2500, termbox.ColorWhite, termbox.ColorBlack)
-		termbox.ChangeCell(i, 17, 0x2500, termbox.ColorWhite, termbox.ColorBlack)
-		termbox.ChangeCell(i, 4, 0x2500, termbox.ColorWhite, termbox.ColorBlack)
+		termbox.SetCell(i, 0, 0x2500, termbox.ColorWhite, termbox.ColorBlack)
+		termbox.SetCell(i, 23, 0x2500, termbox.ColorWhite, termbox.ColorBlack)
+		termbox.SetCell(i, 17, 0x2500, termbox.ColorWhite, termbox.ColorBlack)
+		termbox.SetCell(i, 4, 0x2500, termbox.ColorWhite, termbox.ColorBlack)
 	}
 	for i := 1; i < 23; i++ {
-		termbox.ChangeCell(0, i, 0x2502, termbox.ColorWhite, termbox.ColorBlack)
-		termbox.ChangeCell(79, i, 0x2502, termbox.ColorWhite, termbox.ColorBlack)
+		termbox.SetCell(0, i, 0x2502, termbox.ColorWhite, termbox.ColorBlack)
+		termbox.SetCell(79, i, 0x2502, termbox.ColorWhite, termbox.ColorBlack)
 	}
-	termbox.ChangeCell(0, 17, 0x251C, termbox.ColorWhite, termbox.ColorBlack)
-	termbox.ChangeCell(79, 17, 0x2524, termbox.ColorWhite, termbox.ColorBlack)
-	termbox.ChangeCell(0, 4, 0x251C, termbox.ColorWhite, termbox.ColorBlack)
-	termbox.ChangeCell(79, 4, 0x2524, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(0, 17, 0x251C, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(79, 17, 0x2524, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(0, 4, 0x251C, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(79, 4, 0x2524, termbox.ColorWhite, termbox.ColorBlack)
 	for i := 5; i < 17; i++ {
-		termbox.ChangeCell(1, i, 0x2588, termbox.ColorYellow, termbox.ColorYellow)
-		termbox.ChangeCell(78, i, 0x2588, termbox.ColorYellow, termbox.ColorYellow)
+		termbox.SetCell(1, i, 0x2588, termbox.ColorYellow, termbox.ColorYellow)
+		termbox.SetCell(78, i, 0x2588, termbox.ColorYellow, termbox.ColorYellow)
 	}
 
 	draw_key(K_ESC, termbox.ColorWhite, termbox.ColorBlue)
@@ -629,13 +629,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer termbox.Shutdown()
+	defer termbox.Close()
 
 	termbox.SetInputMode(termbox.InputEsc)
 
-	termbox.Clear()
+	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 	draw_keyboard()
-	termbox.Present()
+	termbox.Flush()
 	ctrlxpressed := false
 loop:
 	for {
@@ -659,16 +659,16 @@ loop:
 				ctrlxpressed = false
 			}
 
-			termbox.Clear()
+			termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 			draw_keyboard()
 			dispatch_press(&ev)
 			pretty_print_press(&ev)
-			termbox.Present()
+			termbox.Flush()
 		case termbox.EventResize:
-			termbox.Clear()
+			termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 			draw_keyboard()
 			pretty_print_resize(&ev)
-			termbox.Present()
+			termbox.Flush()
 		}
 	}
 }

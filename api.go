@@ -9,14 +9,14 @@ import "syscall"
 // public API
 
 // Initializes termbox library. This function should be called before any other functions.
-// After successful initialization, the library must be finalized using 'Shutdown' function.
+// After successful initialization, the library must be finalized using 'Close' function.
 //
 // Example usage:
 //      err := termbox.Init()
 //      if err != nil {
 //              panic(err.String())
 //      }
-//      defer termbox.Shutdown()
+//      defer termbox.Close()
 func Init() error {
 	// TODO: try os.Stdin and os.Stdout directly
 	var err error
@@ -87,7 +87,7 @@ func Init() error {
 
 // Finalizes termbox library, should be called after successful initialization
 // when termbox's functionality isn't required anymore.
-func Shutdown() {
+func Close() {
 	out.WriteString(funcs[t_show_cursor])
 	out.WriteString(funcs[t_sgr0])
 	out.WriteString(funcs[t_clear_screen])
@@ -100,7 +100,7 @@ func Shutdown() {
 }
 
 // Synchronizes the internal back buffer with the terminal.
-func Present() {
+func Flush() {
 	// invalidate cursor position
 	lastx = coord_invalid
 	lasty = coord_invalid
@@ -148,8 +148,9 @@ func HideCursor() {
 	SetCursor(cursor_hidden, cursor_hidden)
 }
 
-// Puts the 'cell' into the internal back buffer at the specified position.
-func PutCell(x, y int, cell Cell) {
+// Changes cell's parameters in the internal back buffer at the specified
+// position.
+func SetCell(x, y int, ch rune, fg, bg Attribute) {
 	if x < 0 || x >= back_buffer.width {
 		return
 	}
@@ -157,14 +158,7 @@ func PutCell(x, y int, cell Cell) {
 		return
 	}
 
-	back_buffer.cells[y*back_buffer.width+x] = cell
-}
-
-// Changes cell's parameters in the internal back buffer at the specified
-// position.
-func ChangeCell(x, y int, ch rune, fg, bg Attribute) {
-	var c = Cell{ch, fg, bg}
-	PutCell(x, y, c)
+	back_buffer.cells[y*back_buffer.width+x] = Cell{ch, fg, bg}
 }
 
 // Returns a slice of the termbox back buffer. You can get its dimensions using
@@ -211,7 +205,8 @@ func Size() (int, int) {
 }
 
 // Clears the internal back buffer.
-func Clear() {
+func Clear(fg, bg Attribute) {
+	foreground, background = fg, bg
 	update_size_maybe()
 	back_buffer.clear()
 }
@@ -231,9 +226,4 @@ func SetInputMode(mode InputMode) InputMode {
 		input_mode = mode
 	}
 	return input_mode
-}
-
-// Set attributes which are used for clearing the internal back buffer.
-func SetClearAttributes(fg, bg Attribute) {
-	foreground, background = fg, bg
 }
