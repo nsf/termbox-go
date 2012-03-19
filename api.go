@@ -161,12 +161,9 @@ func SetCell(x, y int, ch rune, fg, bg Attribute) {
 	back_buffer.cells[y*back_buffer.width+x] = Cell{ch, fg, bg}
 }
 
-// Returns a slice of the termbox back buffer. You can get its dimensions using
-// 'Size' function. The slice remains valid as long as no 'Clear' or 'Present'
-// function calls were made after call to this function.
-//
-// The function is provided for performance reasons, normally it is suggested to
-// use 'ChangeCell' or 'PutCell'.
+// Returns a slice into the termbox's back buffer. You can get its dimensions
+// using 'Size' function. The slice remains valid as long as no 'Clear' or
+// 'Flush' function calls were made after call to this function.
 func CellBuffer() []Cell {
 	return back_buffer.cells
 }
