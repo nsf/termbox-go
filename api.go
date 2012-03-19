@@ -14,7 +14,7 @@ import "syscall"
 // Example usage:
 //      err := termbox.Init()
 //      if err != nil {
-//              panic(err.String())
+//              panic(err)
 //      }
 //      defer termbox.Close()
 func Init() error {
