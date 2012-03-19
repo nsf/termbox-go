@@ -91,7 +91,7 @@ func HideCursor() {
 }
 
 // Puts the 'cell' into the internal back buffer at the specified position.
-func PutCell(x, y int, cell *Cell) {
+func PutCell(x, y int, cell Cell) {
 	if x < 0 || x >= back_buffer.width {
 		return
 	}
@@ -99,14 +99,14 @@ func PutCell(x, y int, cell *Cell) {
 		return
 	}
 
-	back_buffer.cells[y*back_buffer.width+x] = *cell
+	back_buffer.cells[y*back_buffer.width+x] = cell
 }
 
 // Changes cell's parameters in the internal back buffer at the specified
 // position.
 func ChangeCell(x, y int, ch rune, fg, bg Attribute) {
 	var c = Cell{ch, fg, bg}
-	PutCell(x, y, &c)
+	PutCell(x, y, c)
 }
 
 // Returns a slice of the termbox back buffer. You can get its dimensions using

@@ -1,3 +1,4 @@
+// termbox is a library for creating cross-platform text-based interfaces
 package termbox
 
 // public API, common OS agnostic part

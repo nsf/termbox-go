@@ -22,7 +22,7 @@ terminals = {
 	'rxvt-256color' : 'rxvt_256color',
 	'rxvt-unicode' : 'rxvt_unicode',
 	'linux' : 'linux',
-	'Eterm' : 'Eterm',
+	'Eterm' : 'eterm',
 	'screen' : 'screen'
 }
 
