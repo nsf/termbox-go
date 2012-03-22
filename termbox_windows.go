@@ -201,7 +201,7 @@ func fill_console_output_attribute(h syscall.Handle, attr word, n int) (err erro
 }
 
 type diff_msg struct {
-	pos coord
+	pos   coord
 	attrs []word
 	chars []wchar
 }
@@ -231,7 +231,7 @@ var (
 	// these ones just to prevent heap allocs at all costs
 	tmp_info  console_screen_buffer_info
 	tmp_arg   dword
-	tmp_coord = coord{0,0}
+	tmp_coord = coord{0, 0}
 )
 
 func get_term_size(out syscall.Handle) (int, int) {
@@ -262,6 +262,7 @@ func update_size_maybe() {
 }
 
 var color_table_bg = []word{
+	0, // default (black)
 	0, // black
 	background_red,
 	background_green,
@@ -270,10 +271,10 @@ var color_table_bg = []word{
 	background_red | background_blue,                    // magenta
 	background_green | background_blue,                  // cyan
 	background_red | background_blue | background_green, // white
-	0,                                                   // default (black)
 }
 
 var color_table_fg = []word{
+	foreground_red | foreground_blue | foreground_green, // default (white)
 	0,
 	foreground_red,
 	foreground_green,
@@ -282,7 +283,6 @@ var color_table_fg = []word{
 	foreground_red | foreground_blue,                    // magenta
 	foreground_green | foreground_blue,                  // cyan
 	foreground_red | foreground_blue | foreground_green, // white
-	foreground_red | foreground_blue | foreground_green, // default (white)
 }
 
 const (
@@ -353,6 +353,9 @@ func cell_to_char_info(c Cell) (attr word, unicode_char wchar) {
 	}
 	if c.Bg&AttrBold != 0 {
 		attr |= background_intensity
+	}
+	if c.Fg&AttrReverse|c.Bg&AttrReverse != 0 {
+		attr = (attr&0xF0)>>4 | (attr&0x0F)<<4
 	}
 
 	switch ch := c.Ch; {

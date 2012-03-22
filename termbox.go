@@ -24,6 +24,7 @@ const (
 	t_underline
 	t_bold
 	t_blink
+	t_reverse
 	t_enter_keypad
 	t_exit_keypad
 )
@@ -39,27 +40,27 @@ var (
 	funcs []string
 
 	// termbox inner state
-	orig_tios      syscall_Termios
-	back_buffer    cellbuf
-	front_buffer   cellbuf
-	termw          int
-	termh          int
-	input_mode     = InputEsc
-	out            *os.File
-	in             *os.File
-	lastfg         = attr_invalid
-	lastbg         = attr_invalid
-	lastx          = coord_invalid
-	lasty          = coord_invalid
-	cursor_x       = cursor_hidden
-	cursor_y       = cursor_hidden
-	foreground     = ColorDefault
-	background     = ColorDefault
-	inbuf          = make([]byte, 0, 64)
-	outbuf         bytes.Buffer
-	sigwinch       = make(chan os.Signal, 1)
-	input_comm     = make(chan []byte)
-	intbuf         = make([]byte, 0, 16)
+	orig_tios    syscall_Termios
+	back_buffer  cellbuf
+	front_buffer cellbuf
+	termw        int
+	termh        int
+	input_mode   = InputEsc
+	out          *os.File
+	in           *os.File
+	lastfg       = attr_invalid
+	lastbg       = attr_invalid
+	lastx        = coord_invalid
+	lasty        = coord_invalid
+	cursor_x     = cursor_hidden
+	cursor_y     = cursor_hidden
+	foreground   = ColorDefault
+	background   = ColorDefault
+	inbuf        = make([]byte, 0, 64)
+	outbuf       bytes.Buffer
+	sigwinch     = make(chan os.Signal, 1)
+	input_comm   = make(chan []byte)
+	intbuf       = make([]byte, 0, 16)
 )
 
 func write_cursor(x, y int) {
@@ -72,21 +73,21 @@ func write_cursor(x, y int) {
 
 func write_sgr_fg(a Attribute) {
 	outbuf.WriteString("\033[3")
-	outbuf.Write(strconv.AppendUint(intbuf, uint64(a), 10))
+	outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
 	outbuf.WriteString("m")
 }
 
 func write_sgr_bg(a Attribute) {
 	outbuf.WriteString("\033[4")
-	outbuf.Write(strconv.AppendUint(intbuf, uint64(a), 10))
+	outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
 	outbuf.WriteString("m")
 }
 
 func write_sgr(fg, bg Attribute) {
 	outbuf.WriteString("\033[3")
-	outbuf.Write(strconv.AppendUint(intbuf, uint64(fg), 10))
+	outbuf.Write(strconv.AppendUint(intbuf, uint64(fg-1), 10))
 	outbuf.WriteString(";4")
-	outbuf.Write(strconv.AppendUint(intbuf, uint64(bg), 10))
+	outbuf.Write(strconv.AppendUint(intbuf, uint64(bg-1), 10))
 	outbuf.WriteString("m")
 }
 
@@ -127,6 +128,9 @@ func send_attr(fg, bg Attribute) {
 		}
 		if fg&AttrUnderline != 0 {
 			outbuf.WriteString(funcs[t_underline])
+		}
+		if fg&AttrReverse|bg&AttrReverse != 0 {
+			outbuf.WriteString(funcs[t_reverse])
 		}
 
 		lastfg, lastbg = fg, bg

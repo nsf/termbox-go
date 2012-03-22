@@ -114,7 +114,8 @@ const (
 // using bitwise OR ('|'). Although, colors cannot be combined. But you can
 // combine attributes and a single color.
 const (
-	ColorBlack Attribute = iota
+	ColorDefault Attribute = iota
+	ColorBlack
 	ColorRed
 	ColorGreen
 	ColorYellow
@@ -122,12 +123,12 @@ const (
 	ColorMagenta
 	ColorCyan
 	ColorWhite
-	ColorDefault
 )
 
 const (
-	AttrBold      Attribute = 0x10
-	AttrUnderline Attribute = 0x20
+	AttrBold Attribute = 1 << (iota + 4)
+	AttrUnderline
+	AttrReverse
 )
 
 // Input mode. See SetInputMode function.

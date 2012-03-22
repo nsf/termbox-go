@@ -9,8 +9,8 @@ func draw() {
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			termbox.SetCell(x, y, ' ', termbox.ColorWhite,
-				termbox.Attribute(rand.Int() % 8))
+			termbox.SetCell(x, y, ' ', termbox.ColorDefault,
+				termbox.Attribute(rand.Int() % 8)+1)
 		}
 	}
 	termbox.Flush()
