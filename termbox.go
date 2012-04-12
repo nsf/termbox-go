@@ -240,6 +240,23 @@ func setup_term() error {
 
 func parse_escape_sequence(event *Event, buf []byte) int {
 	bufstr := string(buf)
+	if strings.HasPrefix(bufstr, "\033[M") {
+		Cb := uint8(bufstr[3])
+		Cx := uint8(bufstr[4])
+		Cy := uint8(bufstr[5])
+
+		event.Type = EventMouse
+		event.Ch = 0
+		if (Cb & 0x60) == 0x60 {
+			event.Key = KeyButton4 - Key(Cb&0x3)
+		} else {
+			event.Key = KeyButton1 - Key(Cb&0x3)
+		}
+		event.X = int(Cx)
+		event.Y = int(Cy)
+
+		return 6
+	}
 	for i, key := range keys {
 		if strings.HasPrefix(bufstr, key) {
 			event.Ch = 0

@@ -20,6 +20,8 @@ type Event struct {
 	Ch     rune      // a unicode character
 	Width  int       // width of the screen
 	Height int       // height of the screen
+	X      int
+	Y      int
 }
 
 // A cell, single conceptual entity on the screen. The screen is basically a 2d
@@ -55,6 +57,12 @@ const (
 	KeyArrowDown
 	KeyArrowLeft
 	KeyArrowRight
+	KeyButton1
+	KeyButton2
+	KeyButton3
+	KeyButtonRelease
+	KeyButton4
+	KeyButton5
 )
 
 const (
@@ -142,4 +150,5 @@ const (
 const (
 	EventKey EventType = iota
 	EventResize
+	EventMouse
 )
