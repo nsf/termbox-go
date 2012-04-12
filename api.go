@@ -66,6 +66,7 @@ func Init() error {
 	out.WriteString(funcs[t_enter_keypad])
 	out.WriteString(funcs[t_hide_cursor])
 	out.WriteString(funcs[t_clear_screen])
+	out.WriteString("\033[?1003h")
 
 	termw, termh = get_term_size(out.Fd())
 	back_buffer.init(termw, termh)
@@ -93,6 +94,7 @@ func Close() {
 	out.WriteString(funcs[t_clear_screen])
 	out.WriteString(funcs[t_exit_ca])
 	out.WriteString(funcs[t_exit_keypad])
+	out.WriteString("\033[?1003l")
 	tcsetattr(out.Fd(), &orig_tios)
 
 	out.Close()
