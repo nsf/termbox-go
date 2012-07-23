@@ -178,7 +178,7 @@ type combo struct {
 }
 
 var combos = []combo{
-	{[][]key{K_TILDE, K_2, K_LCTRL, K_RCTRL}},
+	{[][]key{K_TILDE, K_2, K_SPACE, K_LCTRL, K_RCTRL}},
 	{[][]key{K_A, K_LCTRL, K_RCTRL}},
 	{[][]key{K_B, K_LCTRL, K_RCTRL}},
 	{[][]key{K_C, K_LCTRL, K_RCTRL}},

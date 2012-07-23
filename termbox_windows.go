@@ -500,7 +500,13 @@ func key_event_record_to_event(r *key_event_record) (Event, bool) {
 				return Event{}, false
 			}
 		case vk_space:
-			e.Key = KeySpace
+			if ctrlpressed {
+				// manual return here, because KeyCtrlSpace is zero
+				e.Key = KeyCtrlSpace
+				return e, true
+			} else {
+				e.Key = KeySpace
+			}
 		}
 
 		if e.Key != 0 {

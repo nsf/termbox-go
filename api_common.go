@@ -60,6 +60,7 @@ const (
 const (
 	KeyCtrlTilde      Key = 0x00
 	KeyCtrl2          Key = 0x00
+	KeyCtrlSpace      Key = 0x00
 	KeyCtrlA          Key = 0x01
 	KeyCtrlB          Key = 0x02
 	KeyCtrlC          Key = 0x03
