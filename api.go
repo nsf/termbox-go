@@ -76,9 +76,10 @@ func Init() error {
 	go func() {
 		buf := make([]byte, 128)
 		for {
-			n, _ := in.Read(buf)
-			input_comm <- buf[:n]
-			buf = (<-input_comm)[:128]
+			n, err := in.Read(buf)
+			input_comm <- input_event{buf[:n], err}
+			ie := <-input_comm
+			buf = ie.data[:128]
 		}
 	}()
 
@@ -100,7 +101,7 @@ func Close() {
 }
 
 // Synchronizes the internal back buffer with the terminal.
-func Flush() {
+func Flush() error {
 	// invalidate cursor position
 	lastx = coord_invalid
 	lasty = coord_invalid
@@ -124,7 +125,7 @@ func Flush() {
 	if !is_cursor_hidden(cursor_x, cursor_y) {
 		write_cursor(cursor_x, cursor_y)
 	}
-	flush()
+	return flush()
 }
 
 // Sets the position of the cursor. See also HideCursor().
@@ -169,27 +170,31 @@ func CellBuffer() []Cell {
 }
 
 // Wait for an event and return it. This is a blocking function call.
-func PollEvent() Event {
+func PollEvent() (Event, error) {
 	var event Event
 
 	// try to extract event from input buffer, return on success
 	event.Type = EventKey
 	if extract_event(&event) {
-		return event
+		return event, nil
 	}
 
 	for {
 		select {
-		case data := <-input_comm:
-			inbuf = append(inbuf, data...)
-			input_comm <- data
+		case ev := <-input_comm:
+			if ev.err != nil {
+				return Event{}, ev.err
+			}
+
+			inbuf = append(inbuf, ev.data...)
+			input_comm <- ev
 			if extract_event(&event) {
-				return event
+				return event, nil
 			}
 		case <-sigwinch:
 			event.Type = EventResize
 			event.Width, event.Height = get_term_size(out.Fd())
-			return event
+			return event, nil
 		}
 	}
 	panic("unreachable")
@@ -202,10 +207,11 @@ func Size() (int, int) {
 }
 
 // Clears the internal back buffer.
-func Clear(fg, bg Attribute) {
+func Clear(fg, bg Attribute) error {
 	foreground, background = fg, bg
-	update_size_maybe()
+	err := update_size_maybe()
 	back_buffer.clear()
+	return err
 }
 
 // Sets termbox input mode. Termbox has two input modes:

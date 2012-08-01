@@ -60,13 +60,21 @@ func Close() {
 }
 
 // Synchronizes the internal back buffer with the terminal.
-func Flush() {
+func Flush() error {
+	var err error
 	update_size_maybe()
 	prepare_diff_messages()
 	for _, msg := range diffbuf {
-		write_console_output_attribute(out, msg.attrs, msg.pos, nil)
-		write_console_output_character(out, msg.chars, msg.pos, nil)
+		err = write_console_output_attribute(out, msg.attrs, msg.pos, nil)
+		if err != nil {
+			return err
+		}
+		err = write_console_output_character(out, msg.chars, msg.pos, nil)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // Sets the position of the cursor. See also HideCursor().
@@ -111,8 +119,9 @@ func CellBuffer() []Cell {
 }
 
 // Wait for an event and return it. This is a blocking function call.
-func PollEvent() Event {
-	return <-input_comm
+func PollEvent() (Event, err) {
+	ev := <-input_comm
+	return ev.event, ev.err
 }
 
 // Returns the size of the internal back buffer (which is the same as
@@ -122,10 +131,11 @@ func Size() (int, int) {
 }
 
 // Clears the internal back buffer.
-func Clear(fg, bg Attribute) {
+func Clear(fg, bg Attribute) error {
 	foreground, background = fg, bg
 	update_size_maybe()
 	back_buffer.clear()
+	return nil
 }
 
 // Sets termbox input mode. Termbox has two input modes:

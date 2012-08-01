@@ -206,6 +206,11 @@ type diff_msg struct {
 	chars []wchar
 }
 
+type input_event struct {
+	event Event
+	err error
+}
+
 var (
 	orig_mode    dword
 	back_buffer  cellbuf
@@ -225,7 +230,7 @@ var (
 	beg_x        = -1
 	beg_y        = -1
 	beg_i        = -1
-	input_comm   = make(chan Event)
+	input_comm   = make(chan input_event)
 	alt_mode_esc = false
 
 	// these ones just to prevent heap allocs at all costs
@@ -565,7 +570,7 @@ func input_event_producer() {
 	for {
 		err = read_console_input(in, &r)
 		if err != nil {
-			panic(err)
+			input_comm <- input_event{err: err}
 		}
 
 		switch r.event_type {
@@ -574,16 +579,16 @@ func input_event_producer() {
 			ev, ok := key_event_record_to_event(kr)
 			if ok {
 				for i := 0; i < int(kr.repeat_count); i++ {
-					input_comm <- ev
+					input_comm <- input_event{ev, nil}
 				}
 			}
 		case window_buffer_size_event:
 			sr := *(*window_buffer_size_record)(unsafe.Pointer(&r.event))
-			input_comm <- Event{
+			input_comm <- input_event{Event{
 				Type:   EventResize,
 				Width:  int(sr.size.x),
 				Height: int(sr.size.y),
-			}
+			}, nil}
 		}
 	}
 }

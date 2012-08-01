@@ -34,6 +34,11 @@ const (
 	attr_invalid  = Attribute(0xFFFF)
 )
 
+type input_event struct {
+	data []byte
+	err error
+}
+
 var (
 	// term specific sequences
 	keys  []string
@@ -59,7 +64,7 @@ var (
 	inbuf        = make([]byte, 0, 64)
 	outbuf       bytes.Buffer
 	sigwinch     = make(chan os.Signal, 1)
-	input_comm   = make(chan []byte)
+	input_comm   = make(chan input_event)
 	intbuf       = make([]byte, 0, 16)
 )
 
@@ -147,18 +152,21 @@ func send_char(x, y int, ch rune) {
 	outbuf.Write(buf[:n])
 }
 
-func flush() {
-	io.Copy(out, &outbuf)
+func flush() error {
+	_, err := io.Copy(out, &outbuf)
 	outbuf.Reset()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func send_clear() {
+func send_clear() error {
 	send_attr(foreground, background)
 	outbuf.WriteString(funcs[t_clear_screen])
 	if !is_cursor_hidden(cursor_x, cursor_y) {
 		write_cursor(cursor_x, cursor_y)
 	}
-	flush()
 
 	// we need to invalidate cursor position too and these two vars are
 	// used only for simple cursor positioning optimization, cursor
@@ -167,17 +175,20 @@ func send_clear() {
 	// cursor moved
 	lastx = coord_invalid
 	lasty = coord_invalid
+
+	return flush()
 }
 
-func update_size_maybe() {
+func update_size_maybe() error {
 	w, h := get_term_size(out.Fd())
 	if w != termw || h != termh {
 		termw, termh = w, h
 		back_buffer.resize(termw, termh)
 		front_buffer.resize(termw, termh)
 		front_buffer.clear()
-		send_clear()
+		return send_clear()
 	}
+	return nil
 }
 
 func tcsetattr(fd uintptr, termios *syscall_Termios) error {
