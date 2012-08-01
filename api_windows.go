@@ -61,18 +61,11 @@ func Close() {
 
 // Synchronizes the internal back buffer with the terminal.
 func Flush() error {
-	var err error
 	update_size_maybe()
 	prepare_diff_messages()
 	for _, msg := range diffbuf {
-		err = write_console_output_attribute(out, msg.attrs, msg.pos, nil)
-		if err != nil {
-			return err
-		}
-		err = write_console_output_character(out, msg.chars, msg.pos, nil)
-		if err != nil {
-			return err
-		}
+		write_console_output_attribute(out, msg.attrs, msg.pos, nil)
+		write_console_output_character(out, msg.chars, msg.pos, nil)
 	}
 	return nil
 }
@@ -119,7 +112,7 @@ func CellBuffer() []Cell {
 }
 
 // Wait for an event and return it. This is a blocking function call.
-func PollEvent() (Event, err) {
+func PollEvent() (Event, error) {
 	ev := <-input_comm
 	return ev.event, ev.err
 }
