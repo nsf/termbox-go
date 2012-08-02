@@ -353,14 +353,14 @@ func prepare_diff_messages() {
 
 func cell_to_char_info(c Cell) (attr word, unicode_char wchar) {
 	attr = color_table_fg[c.Fg&0x0F] | color_table_bg[c.Bg&0x0F]
+	if c.Fg&AttrReverse|c.Bg&AttrReverse != 0 {
+		attr = (attr&0xF0)>>4 | (attr&0x0F)<<4
+	}
 	if c.Fg&AttrBold != 0 {
 		attr |= foreground_intensity
 	}
 	if c.Bg&AttrBold != 0 {
 		attr |= background_intensity
-	}
-	if c.Fg&AttrReverse|c.Bg&AttrReverse != 0 {
-		attr = (attr&0xF0)>>4 | (attr&0x0F)<<4
 	}
 
 	switch ch := c.Ch; {
