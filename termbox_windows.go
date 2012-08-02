@@ -230,7 +230,7 @@ var (
 	beg_x        = -1
 	beg_y        = -1
 	beg_i        = -1
-	input_comm   = make(chan input_event)
+	input_comm   = make(chan Event)
 	alt_mode_esc = false
 
 	// these ones just to prevent heap allocs at all costs
@@ -570,7 +570,7 @@ func input_event_producer() {
 	for {
 		err = read_console_input(in, &r)
 		if err != nil {
-			input_comm <- input_event{err: err}
+			input_comm <- Event{Type: EventError, Err: err}
 		}
 
 		switch r.event_type {
@@ -579,16 +579,16 @@ func input_event_producer() {
 			ev, ok := key_event_record_to_event(kr)
 			if ok {
 				for i := 0; i < int(kr.repeat_count); i++ {
-					input_comm <- input_event{ev, nil}
+					input_comm <- ev
 				}
 			}
 		case window_buffer_size_event:
 			sr := *(*window_buffer_size_record)(unsafe.Pointer(&r.event))
-			input_comm <- input_event{Event{
+			input_comm <- Event{
 				Type:   EventResize,
 				Width:  int(sr.size.x),
 				Height: int(sr.size.y),
-			}, nil}
+			}
 		}
 	}
 }
