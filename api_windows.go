@@ -112,9 +112,12 @@ func CellBuffer() []Cell {
 }
 
 // Wait for an event and return it. This is a blocking function call.
-func PollEvent() (Event, error) {
+func PollEvent() Event {
 	ev := <-input_comm
-	return ev.event, ev.err
+	if ev.err != nil {
+		return Event{Type: EventError, Err: ev.err}
+	}
+	return ev.event
 }
 
 // Returns the size of the internal back buffer (which is the same as

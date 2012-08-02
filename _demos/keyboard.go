@@ -639,7 +639,7 @@ func main() {
 	ctrlxpressed := false
 loop:
 	for {
-		switch ev, _ := termbox.PollEvent(); ev.Type {
+		switch ev := termbox.PollEvent(); ev.Type {
 		case termbox.EventKey:
 			if ev.Key == termbox.KeyCtrlQ && ctrlxpressed {
 				break loop
@@ -669,6 +669,8 @@ loop:
 			draw_keyboard()
 			pretty_print_resize(&ev)
 			termbox.Flush()
+		case termbox.EventError:
+			panic(ev.Err)
 		}
 	}
 }

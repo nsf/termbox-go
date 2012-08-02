@@ -20,6 +20,7 @@ type Event struct {
 	Ch     rune      // a unicode character
 	Width  int       // width of the screen
 	Height int       // height of the screen
+	Err    error     // error in case if input failed
 }
 
 // A cell, single conceptual entity on the screen. The screen is basically a 2d
@@ -143,4 +144,5 @@ const (
 const (
 	EventKey EventType = iota
 	EventResize
+	EventError
 )

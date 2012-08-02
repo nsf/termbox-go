@@ -67,7 +67,7 @@ func main() {
 	draw_all()
 loop:
 	for {
-		switch ev, _ := termbox.PollEvent(); ev.Type {
+		switch ev := termbox.PollEvent(); ev.Type {
 		case termbox.EventKey:
 			switch ev.Key {
 			case termbox.KeyEsc:

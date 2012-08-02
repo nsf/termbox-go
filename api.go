@@ -170,31 +170,31 @@ func CellBuffer() []Cell {
 }
 
 // Wait for an event and return it. This is a blocking function call.
-func PollEvent() (Event, error) {
+func PollEvent() Event {
 	var event Event
 
 	// try to extract event from input buffer, return on success
 	event.Type = EventKey
 	if extract_event(&event) {
-		return event, nil
+		return event
 	}
 
 	for {
 		select {
 		case ev := <-input_comm:
 			if ev.err != nil {
-				return Event{}, ev.err
+				return Event{Type: EventError, Err: ev.err}
 			}
 
 			inbuf = append(inbuf, ev.data...)
 			input_comm <- ev
 			if extract_event(&event) {
-				return event, nil
+				return event
 			}
 		case <-sigwinch:
 			event.Type = EventResize
 			event.Width, event.Height = get_term_size(out.Fd())
-			return event, nil
+			return event
 		}
 	}
 	panic("unreachable")

@@ -26,8 +26,7 @@ func main() {
 	event_queue := make(chan termbox.Event)
 	go func() {
 		for {
-			ev, _ := termbox.PollEvent()
-			event_queue <- ev
+			event_queue <- termbox.PollEvent()
 		}
 	}()
 
