@@ -96,8 +96,18 @@ func Close() {
 	out.WriteString(funcs[t_exit_keypad])
 	tcsetattr(out.Fd(), &orig_tios)
 
+	// I don't close them, becase on darwin a file descriptor which is
+	// blocked in one thread in a read call, gets blocked here as well and
+	// that prevents termbox from shutting down without getting additional
+	// input. Honestly there are issues which prevent multiple Init/Close
+	// calls within the same program anyway, so, let's just leave them open,
+	// OS will clean them up for us. Although correct behaviour will be
+	// implemented one day.
+
+	/*
 	out.Close()
 	in.Close()
+	*/
 }
 
 // Synchronizes the internal back buffer with the terminal.
