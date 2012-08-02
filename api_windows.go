@@ -67,6 +67,9 @@ func Flush() error {
 		write_console_output_attribute(out, msg.attrs, msg.pos, nil)
 		write_console_output_character(out, msg.chars, msg.pos, nil)
 	}
+	if !is_cursor_hidden(cursor_x, cursor_y) {
+		move_cursor(cursor_x, cursor_y)
+	}
 	return nil
 }
 

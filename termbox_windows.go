@@ -411,6 +411,9 @@ func clear() {
 	if err != nil {
 		panic(err)
 	}
+	if !is_cursor_hidden(cursor_x, cursor_y) {
+		move_cursor(cursor_x, cursor_y)
+	}
 }
 
 func key_event_record_to_event(r *key_event_record) (Event, bool) {
