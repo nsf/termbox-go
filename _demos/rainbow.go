@@ -1,8 +1,6 @@
 package main
 
-import (
-	"../../termbox-go"
-)
+import "../../termbox-go"
 
 var x, y int
 
