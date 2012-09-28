@@ -2,8 +2,11 @@
 
 package termbox
 
+import "errors"
+import "fmt"
 import "os"
 import "os/signal"
+import "strings"
 import "syscall"
 
 // public API
@@ -86,6 +89,115 @@ func Init() error {
 	return nil
 }
 
+// used to construct palettes from 24-bit RGB values
+type RGB struct{ R, G, B byte }
+
+// used to load various color palettes for 256-color terminals
+func SetColorPalette(p []RGB) {
+	for n, c := range p {
+		out.WriteString(fmt.Sprintf("\033]4;%v;rgb:%2x/%2x/%2x\x1b\\", n, c.R, c.G, c.B))
+	}
+}
+
+// a preconfigured palette corresponding to XTERM's defaults
+var Palette256 []RGB
+
+func init() {
+	var r, g, b byte
+
+	// initialize the standard 256 color palette
+	Palette256 = make([]RGB, 256)
+
+	// this is the default xterm palette for the first 16 colors
+	// pay attention to the blues, which are increased in luma 
+	// to compensate for human insensitivity to cooler colors
+
+	r, g, b = 205, 205, 238
+	Palette256[0] = RGB{0, 0, 0}
+	Palette256[1] = RGB{r, 0, 0}
+	Palette256[2] = RGB{0, g, 0}
+	Palette256[3] = RGB{r, g, 0}
+	Palette256[4] = RGB{0, 0, b}
+	Palette256[5] = RGB{r, 0, b}
+	Palette256[6] = RGB{0, g, b}
+	Palette256[7] = RGB{r, g, b}
+
+	r, g, b = 255, 255, 255
+	Palette256[8] = RGB{127, 127, 127}
+	Palette256[9] = RGB{r, 0, 0}
+	Palette256[10] = RGB{0, g, 0}
+	Palette256[11] = RGB{r, g, 0}
+	Palette256[12] = RGB{92, 92, b}
+	Palette256[13] = RGB{r, 0, b}
+	Palette256[14] = RGB{0, g, b}
+	Palette256[15] = RGB{r, g, b}
+
+
+	// next we establish a 6x6x6 color cube with no blue
+	// correction -- also xterm common, to the point that
+	// many users think this is hardcoded
+	c := 16
+
+	for r = 0; r < 6; r++ {
+		rr := r * 40
+		if r > 0 {
+			rr += 55
+		}
+		for g = 0; g < 6; g++ {
+			gg := g * 40
+			if g > 0 {
+				gg += 55
+			}
+			for b = 0; b < 6; b++ {
+				bb := b * 40
+				if b > 0 {
+					bb += 55
+				}
+				Palette256[c] = RGB{rr, gg, bb}
+				c++
+			}
+		}
+	}
+
+	// and, following the user assumptions, this is
+	// a 24 color grey ramp
+	var v byte = 8
+	for g := 0; g < 24; g++ {
+		v += 10
+		Palette256[c] = RGB{v, v, v}
+		c++
+	}
+}
+
+// instructs termbox to switch to either ColorMode16 or ColorMode256 
+func SetColorMode(cm ColorMode) error {
+	switch cm {
+	case ColorMode16:
+		color_mode = cm
+		return nil
+	case ColorMode256:
+		// let it fall through, we need to examine $TERM
+	default:
+		return errors.New("termbox: invalid color mode requested")
+	}
+
+	term := os.Getenv("TERM")
+	switch {
+	case term == "":
+		return errors.New("termbox: TERM environment variable not set")
+	case strings.Index(term, "256") == -1:
+		return errors.New("termbox: TERM does not contain \"256\"")
+	}
+
+	// this is the common palette expected by xterm-256 hackers; it is 
+	// NOT the only possible one, and a SetColorPalette command might
+	// be in order..
+
+	color_mode = cm
+	SetColorPalette(Palette256)
+	return nil
+}
+
 // Finalizes termbox library, should be called after successful initialization
 // when termbox's functionality isn't required anymore.
 func Close() {
@@ -105,8 +217,8 @@ func Close() {
 	// implemented one day.
 
 	/*
-	out.Close()
-	in.Close()
+		out.Close()
+		in.Close()
 	*/
 }
 

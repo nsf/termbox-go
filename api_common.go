@@ -128,7 +128,7 @@ const (
 )
 
 const (
-	AttrBold Attribute = 1 << (iota + 4)
+	AttrBold Attribute = 1 << (iota + 8)
 	AttrUnderline
 	AttrReverse
 )

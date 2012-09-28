@@ -36,7 +36,7 @@ const (
 
 type input_event struct {
 	data []byte
-	err error
+	err  error
 }
 
 var (
@@ -76,24 +76,74 @@ func write_cursor(x, y int) {
 	outbuf.WriteString("H")
 }
 
+var color_mode ColorMode
+
+// ColorMode specifies whether Termbox will use an extended 256 color palette
+// made popular by XTERM or the classic 16 color palette known as ANSI or 
+// VT100.
+type ColorMode int
+
+const (
+	ColorMode16  = ColorMode(16)  // Foregrounds and Backgrounds are 256 color
+	ColorMode256 = ColorMode(256) // XTERM's 256 color space
+)
+
 func write_sgr_fg(a Attribute) {
-	outbuf.WriteString("\033[3")
-	outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
-	outbuf.WriteString("m")
+	switch color_mode {
+	case ColorMode256:
+		// clamp color space to 256 colors
+		a &= 0xFF
+		outbuf.WriteString("\033[38;5;")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(a), 10))
+		outbuf.WriteString("m")
+	default:
+		// clamp color space to 16 colors
+		a &= 0xF
+		outbuf.WriteString("\033[3")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
+		outbuf.WriteString("m")
+	}
 }
 
 func write_sgr_bg(a Attribute) {
-	outbuf.WriteString("\033[4")
-	outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
-	outbuf.WriteString("m")
+	switch color_mode {
+	case ColorMode256:
+		// clamp color space to 256 colors
+		a &= 0xFF
+		outbuf.WriteString("\033[48;5;")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(a), 10))
+		outbuf.WriteString("m")
+	default:
+		// clamp color space to 16 colors
+		a &= 0xF
+		outbuf.WriteString("\033[4")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
+		outbuf.WriteString("m")
+	}
 }
 
 func write_sgr(fg, bg Attribute) {
-	outbuf.WriteString("\033[3")
-	outbuf.Write(strconv.AppendUint(intbuf, uint64(fg-1), 10))
-	outbuf.WriteString(";4")
-	outbuf.Write(strconv.AppendUint(intbuf, uint64(bg-1), 10))
-	outbuf.WriteString("m")
+	switch color_mode {
+	case ColorMode256:
+		// clamp color space to 256 colors
+		fg &= 0xFF
+		bg &= 0xFF
+		outbuf.WriteString("\033[38;5;")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(fg), 10))
+		outbuf.WriteString("m")
+		outbuf.WriteString("\033[48;5;")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(bg), 10))
+		outbuf.WriteString("m")
+	default:
+		// clamp color space to 16 colors
+		fg &= 0xF
+		bg &= 0xF
+		outbuf.WriteString("\033[3")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(fg-1), 10))
+		outbuf.WriteString(";4")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(bg-1), 10))
+		outbuf.WriteString("m")
+	}
 }
 
 type winsize struct {
@@ -113,8 +163,8 @@ func get_term_size(fd uintptr) (int, int) {
 func send_attr(fg, bg Attribute) {
 	if fg != lastfg || bg != lastbg {
 		outbuf.WriteString(funcs[t_sgr0])
-		fgcol := fg & 0x0F
-		bgcol := bg & 0x0F
+		fgcol := fg & 0xFF
+		bgcol := bg & 0xFF
 		if fgcol != ColorDefault {
 			if bgcol != ColorDefault {
 				write_sgr(fgcol, bgcol)
