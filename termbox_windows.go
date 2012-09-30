@@ -79,10 +79,10 @@ func get_console_screen_buffer_info(h syscall.Handle, info *console_screen_buffe
 	return
 }
 
-func write_console_output_character(h syscall.Handle, chars []wchar, pos coord, written *dword) (err error) {
+func write_console_output_character(h syscall.Handle, chars []wchar, pos coord) (err error) {
 	r0, _, e1 := syscall.Syscall6(proc_write_console_output_character.Addr(),
 		5, uintptr(h), uintptr(unsafe.Pointer(&chars[0])), uintptr(len(chars)),
-		pos.uintptr(), uintptr(unsafe.Pointer(written)), 0)
+		pos.uintptr(), uintptr(unsafe.Pointer(&tmp_arg)), 0)
 	if int(r0) == 0 {
 		if e1 != 0 {
 			err = error(e1)
@@ -93,10 +93,10 @@ func write_console_output_character(h syscall.Handle, chars []wchar, pos coord, 
 	return
 }
 
-func write_console_output_attribute(h syscall.Handle, attrs []word, pos coord, written *dword) (err error) {
+func write_console_output_attribute(h syscall.Handle, attrs []word, pos coord) (err error) {
 	r0, _, e1 := syscall.Syscall6(proc_write_console_output_attribute.Addr(),
 		5, uintptr(h), uintptr(unsafe.Pointer(&attrs[0])), uintptr(len(attrs)),
-		pos.uintptr(), uintptr(unsafe.Pointer(written)), 0)
+		pos.uintptr(), uintptr(unsafe.Pointer(&tmp_arg)), 0)
 	if int(r0) == 0 {
 		if e1 != 0 {
 			err = error(e1)
