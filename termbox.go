@@ -36,7 +36,7 @@ const (
 
 type input_event struct {
 	data []byte
-	err error
+	err  error
 }
 
 var (

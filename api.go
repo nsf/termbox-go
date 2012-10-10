@@ -40,7 +40,7 @@ func Init() error {
 	signal.Notify(sigwinch, syscall.SIGWINCH)
 	signal.Notify(sigio, syscall.SIGIO)
 
-	_, err = fcntl(in, syscall.F_SETFL, syscall.O_ASYNC | syscall.O_NONBLOCK)
+	_, err = fcntl(in, syscall.F_SETFL, syscall.O_ASYNC|syscall.O_NONBLOCK)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func Init() error {
 // Finalizes termbox library, should be called after successful initialization
 // when termbox's functionality isn't required anymore.
 func Close() {
-	quit<-1
+	quit <- 1
 	out.WriteString(funcs[t_show_cursor])
 	out.WriteString(funcs[t_sgr0])
 	out.WriteString(funcs[t_clear_screen])
