@@ -3,7 +3,6 @@
 package termbox
 
 import "unicode/utf8"
-import "errors"
 import "bytes"
 import "syscall"
 import "unsafe"
@@ -27,6 +26,7 @@ const (
 	t_reverse
 	t_enter_keypad
 	t_exit_keypad
+	t_max_funcs
 )
 
 const (
@@ -207,46 +207,6 @@ func tcgetattr(fd uintptr, termios *syscall_Termios) error {
 		return os.NewSyscallError("SYS_IOCTL", e)
 	}
 	return nil
-}
-
-func setup_term() error {
-	name := os.Getenv("TERM")
-	if name == "" {
-		return errors.New("termbox: TERM environment variable not set")
-	}
-
-	for _, t := range terms {
-		if t.name == name {
-			keys = t.keys
-			funcs = t.funcs
-			return nil
-		}
-	}
-
-	compat_table := []struct {
-		partial string
-		keys    []string
-		funcs   []string
-	}{
-		{"xterm", xterm_keys, xterm_funcs},
-		{"rxvt", rxvt_unicode_keys, rxvt_unicode_funcs},
-		{"linux", linux_keys, linux_funcs},
-		{"Eterm", eterm_keys, eterm_funcs},
-		{"screen", screen_keys, screen_funcs},
-		// let's assume that 'cygwin' is xterm compatible
-		{"cygwin", xterm_keys, xterm_funcs},
-	}
-
-	// try compatibility variants
-	for _, it := range compat_table {
-		if strings.Contains(name, it.partial) {
-			keys = it.keys
-			funcs = it.funcs
-			return nil
-		}
-	}
-
-	return errors.New("termbox: unsupported terminal")
 }
 
 func parse_escape_sequence(event *Event, buf []byte) int {

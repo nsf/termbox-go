@@ -2,6 +2,7 @@
 
 package termbox
 
+import "fmt"
 import "os"
 import "os/signal"
 import "syscall"
@@ -33,7 +34,7 @@ func Init() error {
 
 	err = setup_term()
 	if err != nil {
-		return err
+		return fmt.Errorf("termbox: error while reading terminfo data: %v", err)
 	}
 
 	// we set two signal handlers, because input/output are not really
