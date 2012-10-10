@@ -12,13 +12,13 @@ package termbox
 import (
 	"bytes"
 	"encoding/binary"
-	"io/ioutil"
 	"fmt"
+	"io/ioutil"
 	"os"
 )
 
 const (
-	tiMagic = 0432
+	tiMagic        = 0432
 	tiHeaderLength = 12
 )
 
@@ -56,23 +56,23 @@ func setup_term() (err error) {
 		return
 	}
 
-	if header[2] % 2 != 0 {
+	if header[2]%2 != 0 {
 		// old quirk to align everything on word boundaries
 		header[2] += 1
 	}
-	strOffset = tiHeaderLength + header[1] + header[2] + 2 * header[3]
-	tableOffset = strOffset + 2 * header[4]
+	strOffset = tiHeaderLength + header[1] + header[2] + 2*header[3]
+	tableOffset = strOffset + 2*header[4]
 
-	keys = make([]string, 0xFFFF - keyMax)
+	keys = make([]string, 0xFFFF-keyMax)
 	for i, _ := range keys {
-		keys[i], err = tiReadString(rd, strOffset + 2 * tiKeys[i], tableOffset)
+		keys[i], err = tiReadString(rd, strOffset+2*tiKeys[i], tableOffset)
 		if err != nil {
 			return
 		}
 	}
 	funcs = make([]string, t_max_funcs)
 	for i, _ := range funcs {
-		funcs[i], err = tiReadString(rd, strOffset + 2 * tiFuncs[i], tableOffset)
+		funcs[i], err = tiReadString(rd, strOffset+2*tiFuncs[i], tableOffset)
 		if err != nil {
 			return
 		}
@@ -92,7 +92,7 @@ func tiReadString(rd *bytes.Reader, strOff, table int16) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	_, err = rd.Seek(int64(table + off), 0)
+	_, err = rd.Seek(int64(table+off), 0)
 	if err != nil {
 		return "", err
 	}
@@ -113,9 +113,9 @@ func tiReadString(rd *bytes.Reader, strOff, table int16) (string, error) {
 // "Maps" the function constants from termbox.go to the number of the respective
 // string capability in the terminfo file. Taken from (ncurses) term.h.
 var tiFuncs = []int16{
-	28, 40, 16, 13, 5, 39, 36, 27, 26, 34, 89, 88 }
+	28, 40, 16, 13, 5, 39, 36, 27, 26, 34, 89, 88}
 
 // Same as above for the special keys.
 var tiKeys = []int16{
 	66, 68 /* apparently not a typo; 67 is F10 for whatever reason */, 69, 70,
-	71, 72, 73, 74, 75, 67, 216, 217, 77, 59, 76, 164, 82, 81, 87, 61, 79, 83 }
+	71, 72, 73, 74, 75, 67, 216, 217, 77, 59, 76, 164, 82, 81, 87, 61, 79, 83}
