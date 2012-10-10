@@ -27,7 +27,7 @@ func Init() error {
 	if err != nil {
 		return err
 	}
-	in, err = os.Open("/dev/tty")
+	in, err = syscall.Open("/dev/tty", syscall.O_RDONLY, 0)
 	if err != nil {
 		return err
 	}
@@ -37,10 +37,17 @@ func Init() error {
 		return fmt.Errorf("termbox: error while reading terminfo data: %v", err)
 	}
 
-	// we set two signal handlers, because input/output are not really
-	// connected, but they both need to be aware of window size changes
 	signal.Notify(sigwinch, syscall.SIGWINCH)
+	signal.Notify(sigio, syscall.SIGIO)
 
+	_, err = fcntl(in, syscall.F_SETFL, syscall.O_ASYNC | syscall.O_NONBLOCK)
+	if err != nil {
+		return err
+	}
+	_, err = fcntl(in, syscall.F_SETOWN, syscall.Getpid())
+	if err != nil {
+		return err
+	}
 	err = tcgetattr(out.Fd(), &orig_tios)
 	if err != nil {
 		return err
@@ -77,10 +84,20 @@ func Init() error {
 	go func() {
 		buf := make([]byte, 128)
 		for {
-			n, err := in.Read(buf)
-			input_comm <- input_event{buf[:n], err}
-			ie := <-input_comm
-			buf = ie.data[:128]
+			select {
+			case <-sigio:
+				for {
+					n, err := syscall.Read(in, buf)
+					if err == syscall.EAGAIN || err == syscall.EWOULDBLOCK {
+						break
+					}
+					input_comm <- input_event{buf[:n], err}
+					ie := <-input_comm
+					buf = ie.data[:128]
+				}
+			case <-quit:
+				return
+			}
 		}
 	}()
 
@@ -90,6 +107,7 @@ func Init() error {
 // Finalizes termbox library, should be called after successful initialization
 // when termbox's functionality isn't required anymore.
 func Close() {
+	quit<-1
 	out.WriteString(funcs[t_show_cursor])
 	out.WriteString(funcs[t_sgr0])
 	out.WriteString(funcs[t_clear_screen])
@@ -97,18 +115,8 @@ func Close() {
 	out.WriteString(funcs[t_exit_keypad])
 	tcsetattr(out.Fd(), &orig_tios)
 
-	// I don't close them, becase on darwin a file descriptor which is
-	// blocked in one thread in a read call, gets blocked here as well and
-	// that prevents termbox from shutting down without getting additional
-	// input. Honestly there are issues which prevent multiple Init/Close
-	// calls within the same program anyway, so, let's just leave them open,
-	// OS will clean them up for us. Although correct behaviour will be
-	// implemented one day.
-
-	/*
 	out.Close()
-	in.Close()
-	*/
+	syscall.Close(in)
 }
 
 // Synchronizes the internal back buffer with the terminal.

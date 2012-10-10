@@ -52,7 +52,7 @@ var (
 	termh        int
 	input_mode   = InputEsc
 	out          *os.File
-	in           *os.File
+	in           int
 	lastfg       = attr_invalid
 	lastbg       = attr_invalid
 	lastx        = coord_invalid
@@ -64,6 +64,8 @@ var (
 	inbuf        = make([]byte, 0, 64)
 	outbuf       bytes.Buffer
 	sigwinch     = make(chan os.Signal, 1)
+	sigio        = make(chan os.Signal, 1)
+	quit         = make(chan int)
 	input_comm   = make(chan input_event)
 	intbuf       = make([]byte, 0, 16)
 )
@@ -279,4 +281,14 @@ func extract_event(event *Event) bool {
 	}
 
 	return false
+}
+
+func fcntl(fd int, cmd int, arg int) (val int, err error) {
+	r, _, e := syscall.Syscall(syscall.SYS_FCNTL, uintptr(fd), uintptr(cmd),
+		uintptr(arg))
+	val = int(r)
+	if e != 0 {
+		err = e
+	}
+	return
 }
