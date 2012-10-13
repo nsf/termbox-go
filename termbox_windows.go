@@ -208,7 +208,7 @@ type diff_msg struct {
 
 type input_event struct {
 	event Event
-	err error
+	err   error
 }
 
 var (

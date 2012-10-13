@@ -18,14 +18,14 @@ import (
 )
 
 const (
-	tiMagic        = 0432
-	tiHeaderLength = 12
+	ti_magic         = 0432
+	ti_header_length = 12
 )
 
 func setup_term() (err error) {
 	var data []byte
-	var header []int16
-	var strOffset, tableOffset int16
+	var header [6]int16
+	var str_offset, table_offset int16
 
 	term := os.Getenv("TERM")
 	if term == "" {
@@ -46,12 +46,11 @@ func setup_term() (err error) {
 	}
 
 	rd := bytes.NewReader(data)
-	header = make([]int16, 6)
 	// 0: magic number, 1: size of names section, 2: size of boolean section, 3:
 	// size of numbers section (in integers), 4: size of the strings section (in
 	// integers), 5: size of the string table
 
-	err = binary.Read(rd, binary.LittleEndian, header)
+	err = binary.Read(rd, binary.LittleEndian, header[:])
 	if err != nil {
 		return
 	}
@@ -60,19 +59,19 @@ func setup_term() (err error) {
 		// old quirk to align everything on word boundaries
 		header[2] += 1
 	}
-	strOffset = tiHeaderLength + header[1] + header[2] + 2*header[3]
-	tableOffset = strOffset + 2*header[4]
+	str_offset = ti_header_length + header[1] + header[2] + 2*header[3]
+	table_offset = str_offset + 2*header[4]
 
-	keys = make([]string, 0xFFFF-keyMax)
+	keys = make([]string, 0xFFFF-key_min)
 	for i, _ := range keys {
-		keys[i], err = tiReadString(rd, strOffset+2*tiKeys[i], tableOffset)
+		keys[i], err = ti_read_string(rd, str_offset+2*ti_keys[i], table_offset)
 		if err != nil {
 			return
 		}
 	}
 	funcs = make([]string, t_max_funcs)
 	for i, _ := range funcs {
-		funcs[i], err = tiReadString(rd, strOffset+2*tiFuncs[i], tableOffset)
+		funcs[i], err = ti_read_string(rd, str_offset+2*ti_funcs[i], table_offset)
 		if err != nil {
 			return
 		}
@@ -81,10 +80,10 @@ func setup_term() (err error) {
 	return
 }
 
-func tiReadString(rd *bytes.Reader, strOff, table int16) (string, error) {
+func ti_read_string(rd *bytes.Reader, str_off, table int16) (string, error) {
 	var off int16
 
-	_, err := rd.Seek(int64(strOff), 0)
+	_, err := rd.Seek(int64(str_off), 0)
 	if err != nil {
 		return "", err
 	}
@@ -112,10 +111,12 @@ func tiReadString(rd *bytes.Reader, strOff, table int16) (string, error) {
 
 // "Maps" the function constants from termbox.go to the number of the respective
 // string capability in the terminfo file. Taken from (ncurses) term.h.
-var tiFuncs = []int16{
-	28, 40, 16, 13, 5, 39, 36, 27, 26, 34, 89, 88}
+var ti_funcs = []int16{
+	28, 40, 16, 13, 5, 39, 36, 27, 26, 34, 89, 88,
+}
 
 // Same as above for the special keys.
-var tiKeys = []int16{
+var ti_keys = []int16{
 	66, 68 /* apparently not a typo; 67 is F10 for whatever reason */, 69, 70,
-	71, 72, 73, 74, 75, 67, 216, 217, 77, 59, 76, 164, 82, 81, 87, 61, 79, 83}
+	71, 72, 73, 74, 75, 67, 216, 217, 77, 59, 76, 164, 82, 81, 87, 61, 79, 83,
+}

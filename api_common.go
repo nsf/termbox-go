@@ -56,7 +56,7 @@ const (
 	KeyArrowDown
 	KeyArrowLeft
 	KeyArrowRight
-	keyMax
+	key_min
 )
 
 const (
