@@ -12,6 +12,7 @@ package termbox
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -22,25 +23,44 @@ const (
 	ti_header_length = 12
 )
 
+func load_terminfo() ([]byte, error) {
+	var data []byte
+	var err error
+
+	term := os.Getenv("TERM")
+	if term == "" {
+		return nil, fmt.Errorf("termbox: TERM not set")
+	}
+
+	// TODO: look in ~/.terminfo
+	terminfo := os.Getenv("TERMINFO")
+	if terminfo == "" {
+		terminfo = "/usr/share/terminfo"
+	}
+
+	// first try, the typical *nix path
+	path := terminfo + "/" + term[0:1] + "/" + term
+	data, err = ioutil.ReadFile(path)
+	if err == nil {
+		return data, nil
+	}
+
+	// fallback to darwin specific dirs structure
+	path = terminfo + "/" + hex.EncodeToString([]byte(term[:1])) + "/" + term
+	data, err = ioutil.ReadFile(path)
+	if err == nil {
+		return data, nil
+	}
+
+	return nil, err
+}
+
 func setup_term() (err error) {
 	var data []byte
 	var header [6]int16
 	var str_offset, table_offset int16
 
-	term := os.Getenv("TERM")
-	if term == "" {
-		err = fmt.Errorf("termbox: TERM not set")
-		return
-	}
-
-	// TODO: look in ~/.terminfo
-	path := os.Getenv("TERMINFO")
-	if path == "" {
-		path = "/usr/share/terminfo"
-	}
-	path += "/" + term[0:1] + "/" + term
-
-	data, err = ioutil.ReadFile(path)
+	data, err = load_terminfo()
 	if err != nil {
 		return
 	}
