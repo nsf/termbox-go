@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 )
 
 const (
@@ -32,27 +33,58 @@ func load_terminfo() ([]byte, error) {
 		return nil, fmt.Errorf("termbox: TERM not set")
 	}
 
-	// TODO: look in ~/.terminfo
+	// The following behaviour follows the one described in terminfo(5) as
+	// distributed by ncurses.
+
 	terminfo := os.Getenv("TERMINFO")
-	if terminfo == "" {
-		terminfo = "/usr/share/terminfo"
+	if terminfo != "" {
+		// if TERMINFO is set, no other directory should be searched
+		return ti_try_path(terminfo)
 	}
 
+	// next, consider ~/.terminfo
+	home := os.Getenv("HOME")
+	if home != "" {
+		data, err = ti_try_path(home + "/.terminfo")
+		if err == nil {
+			return data, nil
+		}
+	}
+
+	// next, TERMINFO_DIRS
+	dirs := os.Getenv("TERMINFO_DIRS")
+	if dirs != "" {
+		for _, dir := range strings.Split(dirs, ":") {
+			if dir == "" {
+				// "" -> "/usr/share/terminfo"
+				dir = "/usr/share/terminfo"
+			}
+			data, err = ti_try_path(dir)
+			if err == nil {
+				return data, nil
+			}
+		}
+	}
+
+	// fall back to /usr/share/terminfo
+	return ti_try_path("/usr/share/terminfo")
+}
+
+func ti_try_path(path string) (data []byte, err error) {
+	// load_terminfo already made sure it is set
+	term := os.Getenv("TERM")
+
 	// first try, the typical *nix path
-	path := terminfo + "/" + term[0:1] + "/" + term
-	data, err = ioutil.ReadFile(path)
+	terminfo := path + "/" + term[0:1] + "/" + term
+	data, err = ioutil.ReadFile(terminfo)
 	if err == nil {
-		return data, nil
+		return
 	}
 
 	// fallback to darwin specific dirs structure
-	path = terminfo + "/" + hex.EncodeToString([]byte(term[:1])) + "/" + term
-	data, err = ioutil.ReadFile(path)
-	if err == nil {
-		return data, nil
-	}
-
-	return nil, err
+	terminfo = path + "/" + hex.EncodeToString([]byte(term[:1])) + "/" + term
+	data, err = ioutil.ReadFile(terminfo)
+	return
 }
 
 func setup_term() (err error) {
