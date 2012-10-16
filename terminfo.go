@@ -75,7 +75,7 @@ func setup_term() (err error) {
 		return
 	}
 
-	if header[2]%2 != 0 {
+	if (header[1] + header[2])%2 != 0 {
 		// old quirk to align everything on word boundaries
 		header[2] += 1
 	}
