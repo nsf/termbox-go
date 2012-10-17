@@ -6,6 +6,7 @@ import "fmt"
 import "os"
 import "os/signal"
 import "syscall"
+import "runtime"
 
 // public API
 
@@ -45,7 +46,7 @@ func Init() error {
 		return err
 	}
 	_, err = fcntl(in, syscall.F_SETOWN, syscall.Getpid())
-	if err != nil {
+	if runtime.GOOS != "darwin" && err != nil {
 		return err
 	}
 	err = tcgetattr(out.Fd(), &orig_tios)
