@@ -1,5 +1,12 @@
 Native Go implementation of the termbox library. Beta.
 
+Dependencies:
+
+- Recently new code was added to work directly with terminfo database.
+  So it becomes a dependency for termbox-go in order to function properly.
+  In some distros terminfo database comes with "ncurses" library. As far as I
+  know it comes with default MacOSX. Windows OS doesn't need such thing.
+
 TODO:
 
 - Add other OSes to handle termios stuff. See syscalls.go godefs template file.
