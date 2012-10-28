@@ -17,6 +17,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"errors"
 )
 
 const (
@@ -87,6 +88,46 @@ func ti_try_path(path string) (data []byte, err error) {
 	return
 }
 
+func setup_term_builtin() error {
+	name := os.Getenv("TERM")
+	if name == "" {
+		return errors.New("termbox: TERM environment variable not set")
+	}
+
+	for _, t := range terms {
+		if t.name == name {
+			keys = t.keys
+			funcs = t.funcs
+			return nil
+		}
+	}
+
+	compat_table := []struct {
+		partial string
+		keys    []string
+		funcs   []string
+	}{
+		{"xterm", xterm_keys, xterm_funcs},
+		{"rxvt", rxvt_unicode_keys, rxvt_unicode_funcs},
+		{"linux", linux_keys, linux_funcs},
+		{"Eterm", eterm_keys, eterm_funcs},
+		{"screen", screen_keys, screen_funcs},
+		// let's assume that 'cygwin' is xterm compatible
+		{"cygwin", xterm_keys, xterm_funcs},
+	}
+
+	// try compatibility variants
+	for _, it := range compat_table {
+		if strings.Contains(name, it.partial) {
+			keys = it.keys
+			funcs = it.funcs
+			return nil
+		}
+	}
+
+	return errors.New("termbox: unsupported terminal")
+}
+
 func setup_term() (err error) {
 	var data []byte
 	var header [6]int16
@@ -94,7 +135,7 @@ func setup_term() (err error) {
 
 	data, err = load_terminfo()
 	if err != nil {
-		return
+		return setup_term_builtin()
 	}
 
 	rd := bytes.NewReader(data)
@@ -128,8 +169,7 @@ func setup_term() (err error) {
 			return
 		}
 	}
-	err = nil
-	return
+	return nil
 }
 
 func ti_read_string(rd *bytes.Reader, str_off, table int16) (string, error) {
