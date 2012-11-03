@@ -249,9 +249,15 @@ func extract_event(event *Event) bool {
 			return true
 		case InputAlt:
 			// if we're in alt mode, set Alt modifier to event and redo parsing
-			event.Mod = ModAlt
 			copy(inbuf, inbuf[1:])
 			inbuf = inbuf[:len(inbuf)-1]
+			if event.Mod == ModAlt {
+				// Esc or Alt was already pressed, so return Alt + Esc
+				event.Ch = 0
+				event.Key = KeyEsc
+				return true
+			}
+			event.Mod = ModAlt
 			return extract_event(event)
 		default:
 			panic("unreachable")
