@@ -13,11 +13,11 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
-	"errors"
 )
 
 const (
@@ -148,7 +148,7 @@ func setup_term() (err error) {
 		return
 	}
 
-	if (header[1] + header[2])%2 != 0 {
+	if (header[1]+header[2])%2 != 0 {
 		// old quirk to align everything on word boundaries
 		header[2] += 1
 	}

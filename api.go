@@ -20,11 +20,9 @@ import "runtime"
 //      }
 //      defer termbox.Close()
 func Init() error {
-	// TODO: try os.Stdin and os.Stdout directly
 	var err error
 
-	// os.Create is confusing here, but it's just a shortcut for 'open'
-	out, err = os.Create("/dev/tty")
+	out, err = os.OpenFile("/dev/tty", syscall.O_WRONLY, 0)
 	if err != nil {
 		return err
 	}
@@ -118,6 +116,21 @@ func Close() {
 
 	out.Close()
 	syscall.Close(in)
+
+	// reset the state, so that on next Init() it will work again
+	termw = 0
+	termh = 0
+	input_mode = InputEsc
+	out = nil
+	in = 0
+	lastfg = attr_invalid
+	lastbg = attr_invalid
+	lastx = coord_invalid
+	lasty = coord_invalid
+	cursor_x = cursor_hidden
+	cursor_y = cursor_hidden
+	foreground = ColorDefault
+	background = ColorDefault
 }
 
 // Synchronizes the internal back buffer with the terminal.
