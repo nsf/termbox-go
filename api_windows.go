@@ -35,8 +35,24 @@ func Init() error {
 		return err
 	}
 
-	show_cursor(false)
+	w, h := get_win_size(out)
+	orig_screen = out
+	out, err = create_console_screen_buffer()
+	if err != nil {
+		return err
+	}
 
+	err = set_console_screen_buffer_size(out, coord{short(w), short(h)})
+	if err != nil {
+		return err
+	}
+
+	err = set_console_active_screen_buffer(out)
+	if err != nil {
+		return err
+	}
+
+	show_cursor(false)
 	termw, termh = get_term_size(out)
 	back_buffer.init(termw, termh)
 	front_buffer.init(termw, termh)
@@ -56,7 +72,9 @@ func Init() error {
 // Finalizes termbox library, should be called after successful initialization
 // when termbox's functionality isn't required anymore.
 func Close() {
+	// we ignore errors here, because we can't really do anything about them
 	set_console_mode(in, orig_mode)
+	set_console_active_screen_buffer(orig_screen)
 }
 
 // Synchronizes the internal back buffer with the terminal.

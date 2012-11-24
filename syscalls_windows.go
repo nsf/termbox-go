@@ -51,4 +51,8 @@ const (
 	right_alt_pressed  = 0x1
 	right_ctrl_pressed = 0x4
 	shift_pressed      = 0x10
+
+	generic_read            = 0x80000000
+	generic_write           = 0x40000000
+	console_textmode_buffer = 0x1
 )

@@ -54,17 +54,59 @@ func (this coord) uintptr() uintptr {
 var kernel32 = syscall.NewLazyDLL("kernel32.dll")
 
 var (
-	proc_get_console_screen_buffer_info = kernel32.NewProc("GetConsoleScreenBufferInfo")
-	proc_write_console_output_character = kernel32.NewProc("WriteConsoleOutputCharacterW")
-	proc_write_console_output_attribute = kernel32.NewProc("WriteConsoleOutputAttribute")
-	proc_set_console_cursor_info        = kernel32.NewProc("SetConsoleCursorInfo")
-	proc_set_console_cursor_position    = kernel32.NewProc("SetConsoleCursorPosition")
-	proc_read_console_input             = kernel32.NewProc("ReadConsoleInputW")
-	proc_get_console_mode               = kernel32.NewProc("GetConsoleMode")
-	proc_set_console_mode               = kernel32.NewProc("SetConsoleMode")
-	proc_fill_console_output_character  = kernel32.NewProc("FillConsoleOutputCharacterW")
-	proc_fill_console_output_attribute  = kernel32.NewProc("FillConsoleOutputAttribute")
+	proc_set_console_active_screen_buffer = kernel32.NewProc("SetConsoleActiveScreenBuffer")
+	proc_set_console_screen_buffer_size   = kernel32.NewProc("SetConsoleScreenBufferSize")
+	proc_create_console_screen_buffer     = kernel32.NewProc("CreateConsoleScreenBuffer")
+	proc_get_console_screen_buffer_info   = kernel32.NewProc("GetConsoleScreenBufferInfo")
+	proc_write_console_output_character   = kernel32.NewProc("WriteConsoleOutputCharacterW")
+	proc_write_console_output_attribute   = kernel32.NewProc("WriteConsoleOutputAttribute")
+	proc_set_console_cursor_info          = kernel32.NewProc("SetConsoleCursorInfo")
+	proc_set_console_cursor_position      = kernel32.NewProc("SetConsoleCursorPosition")
+	proc_read_console_input               = kernel32.NewProc("ReadConsoleInputW")
+	proc_get_console_mode                 = kernel32.NewProc("GetConsoleMode")
+	proc_set_console_mode                 = kernel32.NewProc("SetConsoleMode")
+	proc_fill_console_output_character    = kernel32.NewProc("FillConsoleOutputCharacterW")
+	proc_fill_console_output_attribute    = kernel32.NewProc("FillConsoleOutputAttribute")
 )
+
+func set_console_active_screen_buffer(h syscall.Handle) (err error) {
+	r0, _, e1 := syscall.Syscall(proc_set_console_active_screen_buffer.Addr(),
+		1, uintptr(h), 0, 0)
+	if int(r0) == 0 {
+		if e1 != 0 {
+			err = error(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return
+}
+
+func set_console_screen_buffer_size(h syscall.Handle, size coord) (err error) {
+	r0, _, e1 := syscall.Syscall(proc_set_console_screen_buffer_size.Addr(),
+		2, uintptr(h), size.uintptr(), 0)
+	if int(r0) == 0 {
+		if e1 != 0 {
+			err = error(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return
+}
+
+func create_console_screen_buffer() (h syscall.Handle, err error) {
+	r0, _, e1 := syscall.Syscall6(proc_create_console_screen_buffer.Addr(),
+		5, uintptr(generic_read|generic_write), 0, 0, console_textmode_buffer, 0, 0)
+	if int(r0) == 0 {
+		if e1 != 0 {
+			err = error(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return syscall.Handle(r0), nil
+}
 
 func get_console_screen_buffer_info(h syscall.Handle, info *console_screen_buffer_info) (err error) {
 	r0, _, e1 := syscall.Syscall(proc_get_console_screen_buffer_info.Addr(),
@@ -213,6 +255,7 @@ type input_event struct {
 
 var (
 	orig_mode    dword
+	orig_screen  syscall.Handle
 	back_buffer  cellbuf
 	front_buffer cellbuf
 	termw        int
@@ -245,6 +288,15 @@ func get_term_size(out syscall.Handle) (int, int) {
 		panic(err)
 	}
 	return int(tmp_info.size.x), int(tmp_info.size.y)
+}
+
+func get_win_size(out syscall.Handle) (int, int) {
+	err := get_console_screen_buffer_info(out, &tmp_info)
+	if err != nil {
+		panic(err)
+	}
+	return int(tmp_info.window.right-tmp_info.window.left) + 1,
+		int(tmp_info.window.bottom-tmp_info.window.top) + 1
 }
 
 func update_size_maybe() {
