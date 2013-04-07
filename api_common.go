@@ -11,8 +11,9 @@ type (
 	Attribute uint16
 )
 
-// This type represents a termbox event. The 'Mod', 'Key' and 'Ch' fields are valid
-// if 'Type' is EventKey. The 'Width' and 'Height' fields are valid if 'Type' is EventResize.
+// This type represents a termbox event. The 'Mod', 'Key' and 'Ch' fields are
+// valid if 'Type' is EventKey. The 'Width' and 'Height' fields are valid if
+// 'Type' is EventResize. The 'Err' field is valid if 'Type' is EventError.
 type Event struct {
 	Type   EventType // one of Event* constants
 	Mod    Modifier  // one of Mod* constants or 0
