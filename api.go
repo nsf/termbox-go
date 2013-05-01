@@ -143,7 +143,7 @@ func Flush() error {
 
 	for y := 0; y < front_buffer.height; y++ {
 		line_offset := y * front_buffer.width
-		for x := 0; x < front_buffer.width; x++ {
+		for x := 0; x < front_buffer.width; {
 			cell_offset := line_offset + x
 			back := &back_buffer.cells[cell_offset]
 			front := &front_buffer.cells[cell_offset]
@@ -153,6 +153,7 @@ func Flush() error {
 			send_attr(back.Fg, back.Bg)
 			send_char(x, y, back.Ch)
 			*front = *back
+			x += runeWidth(back.Ch)
 		}
 	}
 	if !is_cursor_hidden(cursor_x, cursor_y) {

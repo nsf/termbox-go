@@ -351,6 +351,22 @@ const (
 	surr_self        = 0x10000
 )
 
+func runeWidth(r rune) int {
+	if r >= 0x1100 &&
+		(r <= 0x115f || r == 0x2329 || r == 0x232a ||
+			(r >= 0x2e80 && r <= 0xa4cf && r != 0x303f) ||
+			(r >= 0xac00 && r <= 0xd7a3) ||
+			(r >= 0xf900 && r <= 0xfaff) ||
+			(r >= 0xfe30 && r <= 0xfe6f) ||
+			(r >= 0xff00 && r <= 0xff60) ||
+			(r >= 0xffe0 && r <= 0xffe6) ||
+			(r >= 0x20000 && r <= 0x2fffd) ||
+			(r >= 0x30000 && r <= 0x3fffd)) {
+		return 2
+	}
+	return 1
+}
+
 // compares 'back_buffer' with 'front_buffer' and prepares all changes in the form of
 // 'diff_msg's in the 'diff_buf'
 func prepare_diff_messages() {
@@ -362,7 +378,7 @@ func prepare_diff_messages() {
 
 	for y := 0; y < front_buffer.height; y++ {
 		line_offset := y * front_buffer.width
-		for x := 0; x < front_buffer.width; x++ {
+		for x := 0; x < front_buffer.width; {
 			cell_offset := line_offset + x
 			back := &back_buffer.cells[cell_offset]
 			front := &front_buffer.cells[cell_offset]
@@ -389,6 +405,7 @@ func prepare_diff_messages() {
 					beg_x = -1
 				}
 			}
+			x += runeWidth(back.Ch)
 		}
 	}
 
