@@ -143,16 +143,26 @@ func Flush() error {
 
 	for y := 0; y < front_buffer.height; y++ {
 		line_offset := y * front_buffer.width
-		for x := 0; x < front_buffer.width; x++ {
+		for x := 0; x < front_buffer.width; {
 			cell_offset := line_offset + x
 			back := &back_buffer.cells[cell_offset]
 			front := &front_buffer.cells[cell_offset]
+			w := rune_width(back.Ch)
 			if *back == *front {
+				x += w
 				continue
 			}
 			send_attr(back.Fg, back.Bg)
-			send_char(x, y, back.Ch)
+
+			if w == 2 && x == front_buffer.width - 1 {
+				// there's not enough space for 2-cells rune,
+				// let's just put a space in there
+				send_char(x, y, ' ')
+			} else {
+				send_char(x, y, back.Ch)
+			}
 			*front = *back
+			x += w
 		}
 	}
 	if !is_cursor_hidden(cursor_x, cursor_y) {
