@@ -46,9 +46,15 @@ func print_combinations_table(sx, sy int, attrs []termbox.Attribute) {
 }
 
 func print_wide(x, y int, s string) {
+	red := false
 	for _, r := range s {
-		termbox.SetCell(x, y, r, termbox.ColorDefault, termbox.ColorDefault)
+		c := termbox.ColorDefault
+		if red {
+			c = termbox.ColorRed
+		}
+		termbox.SetCell(x, y, r, termbox.ColorDefault, c)
 		x += 2
+		red = !red
 	}
 }
 

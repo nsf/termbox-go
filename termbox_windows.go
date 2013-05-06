@@ -2,6 +2,7 @@ package termbox
 
 import "syscall"
 import "unsafe"
+import "unicode/utf16"
 
 type (
 	wchar uint16
@@ -362,22 +363,12 @@ func prepare_diff_messages() {
 
 	for y := 0; y < front_buffer.height; y++ {
 		line_offset := y * front_buffer.width
-		for x := 0; x < front_buffer.width; x++ {
+		for x := 0; x < front_buffer.width; {
 			cell_offset := line_offset + x
 			back := &back_buffer.cells[cell_offset]
 			front := &front_buffer.cells[cell_offset]
-			if *back != *front {
-				// have diff
-				if beg_x == -1 {
-					// no started sequence, start one
-					beg_x, beg_y = x, y
-					beg_i = len(charsbuf)
-				}
-				attr, char := cell_to_char_info(*back)
-				attrsbuf = append(attrsbuf, attr)
-				charsbuf = append(charsbuf, char)
-				*front = *back
-			} else {
+			w := rune_width(back.Ch)
+			if *back == *front {
 				if beg_x != -1 {
 					// there is a sequence in progress,
 					// commit it
@@ -388,7 +379,50 @@ func prepare_diff_messages() {
 					})
 					beg_x = -1
 				}
+				x += w
+				continue
 			}
+
+			*front = *back
+
+			// have diff
+			if beg_x == -1 {
+				// no started sequence, start one
+				beg_x, beg_y = x, y
+				beg_i = len(charsbuf)
+			}
+			attr, char := cell_to_char_info(*back)
+			if w == 2 && x == front_buffer.width - 1 {
+				// not enough space for a 2-cells rune,
+				// let's just put a space in there
+				front.Ch = ' '
+				char[0] = ' '
+				w = 1
+			}
+
+			attrsbuf = append(attrsbuf, attr)
+			charsbuf = append(charsbuf, char[0])
+			if w == 2 {
+				// we assume here that only 2-cell
+				// runes can use more than one utf16
+				// characters, it's not true, but in
+				// most cases it is
+				attrsbuf = append(attrsbuf, attr)
+				charsbuf = append(charsbuf, char[1])
+
+				// for wide runes we also trash the next cell,
+				// so that it gets updated correctly later, we
+				// never get there if the wide rune happened to
+				// be in the last cell of the line, no need to
+				// check for bounds
+				next := cell_offset + 1
+				front_buffer.cells[next] = Cell{
+					Ch: 0,
+					Fg: back.Fg,
+					Bg: back.Bg,
+				}
+			}
+			x += w
 		}
 	}
 
@@ -403,7 +437,7 @@ func prepare_diff_messages() {
 	}
 }
 
-func cell_to_char_info(c Cell) (attr word, unicode_char wchar) {
+func cell_to_char_info(c Cell) (attr word, wc [2]wchar) {
 	attr = color_table_fg[c.Fg&0x0F] | color_table_bg[c.Bg&0x0F]
 	if c.Fg&AttrReverse|c.Bg&AttrReverse != 0 {
 		attr = (attr&0xF0)>>4 | (attr&0x0F)<<4
@@ -415,13 +449,14 @@ func cell_to_char_info(c Cell) (attr word, unicode_char wchar) {
 		attr |= background_intensity
 	}
 
-	switch ch := c.Ch; {
-	case ch < 0, surr1 <= ch && ch < surr3, ch >= surr_self:
-		unicode_char = replacement_char
-	default:
-		unicode_char = wchar(ch)
+	r0, r1 := utf16.EncodeRune(c.Ch)
+	if r0 == 0xFFFD {
+		wc[0] = wchar(c.Ch)
+		wc[1] = ' '
+	} else {
+		wc[0] = wchar(r0)
+		wc[1] = wchar(r1)
 	}
-
 	return
 }
 
@@ -459,7 +494,7 @@ func clear() {
 	if err != nil {
 		panic(err)
 	}
-	err = fill_console_output_character(out, char, termw*termh)
+	err = fill_console_output_character(out, char[0], termw*termh)
 	if err != nil {
 		panic(err)
 	}
