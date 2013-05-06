@@ -152,6 +152,7 @@ func Flush() error {
 				x += w
 				continue
 			}
+			*front = *back
 			send_attr(back.Fg, back.Bg)
 
 			if w == 2 && x == front_buffer.width - 1 {
@@ -160,8 +161,15 @@ func Flush() error {
 				send_char(x, y, ' ')
 			} else {
 				send_char(x, y, back.Ch)
+				if w == 2 {
+					next := cell_offset + 1
+					front_buffer.cells[next] = Cell{
+						Ch: 0,
+						Fg: back.Fg,
+						Bg: back.Bg,
+					}
+				}
 			}
-			*front = *back
 			x += w
 		}
 	}
