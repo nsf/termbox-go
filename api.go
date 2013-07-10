@@ -147,13 +147,13 @@ func Flush() error {
 			cell_offset := line_offset + x
 			back := &back_buffer.cells[cell_offset]
 			front := &front_buffer.cells[cell_offset]
+			if back.Ch < ' ' {
+				back.Ch = ' '
+			}
 			w := rune_width(back.Ch)
 			if *back == *front {
 				x += w
 				continue
-			}
-			if back.Ch < ' ' {
-				back.Ch = ' '
 			}
 			*front = *back
 			send_attr(back.Fg, back.Bg)
