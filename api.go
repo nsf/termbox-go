@@ -152,6 +152,9 @@ func Flush() error {
 				x += w
 				continue
 			}
+			if back.Ch < ' ' {
+				back.Ch = ' '
+			}
 			*front = *back
 			send_attr(back.Fg, back.Bg)
 
