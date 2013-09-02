@@ -90,9 +90,13 @@ func Init() error {
 					if err == syscall.EAGAIN || err == syscall.EWOULDBLOCK {
 						break
 					}
-					input_comm <- input_event{buf[:n], err}
-					ie := <-input_comm
-					buf = ie.data[:128]
+					select {
+					case input_comm <- input_event{buf[:n], err}:
+						ie := <-input_comm
+						buf = ie.data[:128]
+					case <-quit:
+						return
+					}
 				}
 			case <-quit:
 				return
