@@ -35,12 +35,12 @@ func Init() error {
 		return err
 	}
 
-	w, h := get_win_size(out)
 	orig_screen = out
 	out, err = create_console_screen_buffer()
 	if err != nil {
 		return err
 	}
+	w, h := get_win_size(out)
 
 	err = set_console_screen_buffer_size(out, coord{short(w), short(h)})
 	if err != nil {
