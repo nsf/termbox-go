@@ -75,6 +75,7 @@ func Close() {
 	// we ignore errors here, because we can't really do anything about them
 	set_console_mode(in, orig_mode)
 	set_console_active_screen_buffer(orig_screen)
+	syscall.Close(out)
 }
 
 // Synchronizes the internal back buffer with the terminal.
