@@ -230,8 +230,9 @@ func parse_escape_sequence(event *Event, buf []byte) int {
 		case 4:
 			event.Key = Button5
 		}
-		event.MouseX = int(buf[4])
-		event.MouseY = int(buf[5])
+		// the coord is 1,1 for upper left
+		event.MouseX = int(buf[4]) - 1
+		event.MouseY = int(buf[5]) - 1
 		return 6
 	}
 
