@@ -204,7 +204,7 @@ func ti_read_string(rd *bytes.Reader, str_off, table int16) (string, error) {
 // "Maps" the function constants from termbox.go to the number of the respective
 // string capability in the terminfo file. Taken from (ncurses) term.h.
 var ti_funcs = []int16{
-	28, 40, 16, 13, 5, 39, 36, 27, 26, 34, 89, 88,
+	28, 40, 16, 13, 5, 39, 36, 27, 26, 34, 89, 88, 0, 0,
 }
 
 // Same as above for the special keys.
