@@ -687,8 +687,8 @@ func input_event_producer() {
 			}
 		case mouse_event:
 			mr := *(*mouse_event_record)(unsafe.Pointer(&r.event))
-			// double click
-			if mr.event_flags == 0x2 {
+			// single click
+			if mr.event_flags == 0 {
 				ev := Event{
 					Type:   EventMouse,
 					MouseX: int(mr.mouse_pos.x),

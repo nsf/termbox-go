@@ -35,6 +35,11 @@ func Init() error {
 		return err
 	}
 
+	err = set_console_mode(in, enable_mouse_input)
+	if err != nil {
+		return err
+	}
+
 	orig_screen = out
 	out, err = create_console_screen_buffer()
 	if err != nil {
