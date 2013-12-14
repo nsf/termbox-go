@@ -163,12 +163,16 @@ func setup_term() (err error) {
 		}
 	}
 	funcs = make([]string, t_max_funcs)
-	for i, _ := range funcs {
+	// the last two entries are reserved for mouse. because the table offset is
+	// not there, the two entries have to fill in manually
+	for i, _ := range funcs[:len(funcs)-2] {
 		funcs[i], err = ti_read_string(rd, str_offset+2*ti_funcs[i], table_offset)
 		if err != nil {
 			return
 		}
 	}
+	funcs[t_max_funcs-2] = "\x1b[?9h"
+	funcs[t_max_funcs-1] = "\x1b[?9l"
 	return nil
 }
 
@@ -204,7 +208,7 @@ func ti_read_string(rd *bytes.Reader, str_off, table int16) (string, error) {
 // "Maps" the function constants from termbox.go to the number of the respective
 // string capability in the terminfo file. Taken from (ncurses) term.h.
 var ti_funcs = []int16{
-	28, 40, 16, 13, 5, 39, 36, 27, 26, 34, 89, 88, 0, 0,
+	28, 40, 16, 13, 5, 39, 36, 27, 26, 34, 89, 88,
 }
 
 // Same as above for the special keys.

@@ -219,20 +219,20 @@ func parse_escape_sequence(event *Event, buf []byte) int {
 	if len(bufstr) >= 6 && strings.HasPrefix(bufstr, "\033[M") {
 		event.Type = EventMouse // KeyEvent by default
 		switch buf[3] {
-		case 0:
+		case 40:
 			event.Key = Button1
-		case 1:
+		case 32:
 			event.Key = Button2
-		case 2:
+		case 33:
 			event.Key = Button3
-		case 3:
+		case 34:
 			event.Key = Button4
-		case 4:
+		case 41:
 			event.Key = Button5
 		}
 		// the coord is 1,1 for upper left
-		event.MouseX = int(buf[4]) - 1
-		event.MouseY = int(buf[5]) - 1
+		event.MouseX = int(buf[4]) - 1 - 32
+		event.MouseY = int(buf[5]) - 1 - 32
 		return 6
 	}
 

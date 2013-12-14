@@ -66,10 +66,10 @@ func draw_all() {
 		0,
 		termbox.AttrBold,
 	})
-	print_combinations_table(2 + len(chars), 1, []termbox.Attribute{
+	print_combinations_table(2+len(chars), 1, []termbox.Attribute{
 		termbox.AttrReverse,
 	})
-	print_wide(2 + len(chars), 11, hello_world)
+	print_wide(2+len(chars), 11, hello_world)
 	termbox.Flush()
 }
 
