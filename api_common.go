@@ -22,6 +22,8 @@ type Event struct {
 	Width  int       // width of the screen
 	Height int       // height of the screen
 	Err    error     // error in case if input failed
+	MouseX int       // x coord of mouse
+	MouseY int       // y coord of mouse
 }
 
 // A cell, single conceptual entity on the screen. The screen is basically a 2d
@@ -57,6 +59,11 @@ const (
 	KeyArrowDown
 	KeyArrowLeft
 	KeyArrowRight
+	Button1
+	Button2
+	Button3
+	Button4
+	Button5
 	key_min
 )
 
@@ -146,5 +153,6 @@ const (
 const (
 	EventKey EventType = iota
 	EventResize
+	EventMouse
 	EventError
 )

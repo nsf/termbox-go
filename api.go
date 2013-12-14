@@ -71,6 +71,7 @@ func Init() error {
 
 	out.WriteString(funcs[t_enter_ca])
 	out.WriteString(funcs[t_enter_keypad])
+	out.WriteString(funcs[t_enter_mouse])
 	out.WriteString(funcs[t_hide_cursor])
 	out.WriteString(funcs[t_clear_screen])
 
@@ -116,6 +117,7 @@ func Close() {
 	out.WriteString(funcs[t_clear_screen])
 	out.WriteString(funcs[t_exit_ca])
 	out.WriteString(funcs[t_exit_keypad])
+	out.WriteString(funcs[t_exit_mouse])
 	tcsetattr(out.Fd(), &orig_tios)
 
 	out.Close()
@@ -162,7 +164,7 @@ func Flush() error {
 			*front = *back
 			send_attr(back.Fg, back.Bg)
 
-			if w == 2 && x == front_buffer.width - 1 {
+			if w == 2 && x == front_buffer.width-1 {
 				// there's not enough space for 2-cells rune,
 				// let's just put a space in there
 				send_char(x, y, ' ')

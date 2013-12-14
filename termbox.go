@@ -26,6 +26,8 @@ const (
 	t_reverse
 	t_enter_keypad
 	t_exit_keypad
+	t_enter_mouse
+	t_exit_mouse
 	t_max_funcs
 )
 
@@ -213,6 +215,26 @@ func tcgetattr(fd uintptr, termios *syscall_Termios) error {
 
 func parse_escape_sequence(event *Event, buf []byte) int {
 	bufstr := string(buf)
+	// mouse
+	if len(bufstr) >= 6 && strings.HasPrefix(bufstr, "\033[M") {
+		event.Type = EventMouse // KeyEvent by default
+		switch buf[3] {
+		case 0:
+			event.Key = Button1
+		case 1:
+			event.Key = Button2
+		case 2:
+			event.Key = Button3
+		case 3:
+			event.Key = Button4
+		case 4:
+			event.Key = Button5
+		}
+		event.MouseX = int(buf[4])
+		event.MouseY = int(buf[5])
+		return 6
+	}
+
 	for i, key := range keys {
 		if strings.HasPrefix(bufstr, key) {
 			event.Ch = 0

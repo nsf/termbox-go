@@ -15,6 +15,7 @@ const (
 	std_input_handle         = -0xa
 	std_output_handle        = -0xb
 	key_event                = 0x1
+	mouse_event              = 0x2
 	window_buffer_size_event = 0x4
 	enable_window_input      = 0x8
 

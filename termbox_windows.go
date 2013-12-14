@@ -46,6 +46,12 @@ type (
 	window_buffer_size_record struct {
 		size coord
 	}
+	mouse_event_record struct {
+		mouse_pos         coord
+		button_state      dword
+		control_key_state dword
+		event_flags       dword
+	}
 )
 
 func (this coord) uintptr() uintptr {
@@ -392,7 +398,7 @@ func prepare_diff_messages() {
 				beg_i = len(charsbuf)
 			}
 			attr, char := cell_to_char_info(*back)
-			if w == 2 && x == front_buffer.width - 1 {
+			if w == 2 && x == front_buffer.width-1 {
 				// not enough space for a 2-cells rune,
 				// let's just put a space in there
 				front.Ch = ' '
@@ -678,6 +684,29 @@ func input_event_producer() {
 				Type:   EventResize,
 				Width:  int(sr.size.x),
 				Height: int(sr.size.y),
+			}
+		case mouse_event:
+			mr := *(*mouse_event_record)(unsafe.Pointer(&r.event))
+			// double click
+			if mr.event_flags == 0x2 {
+				ev := Event{
+					Type:   EventMouse,
+					MouseX: int(mr.mouse_pos.x),
+					MouseY: int(mr.mouse_pos.y),
+				}
+				switch mr.button_state {
+				case 0x1:
+					ev.Key = Button1
+				case 0x4:
+					ev.Key = Button2
+				case 0x8:
+					ev.Key = Button3
+				case 0x10:
+					ev.Key = Button4
+				case 0x2:
+					ev.Key = Button5
+				}
+				input_comm <- ev
 			}
 		}
 	}
