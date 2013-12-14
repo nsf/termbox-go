@@ -696,15 +696,9 @@ func input_event_producer() {
 				}
 				switch mr.button_state {
 				case 0x1:
-					ev.Key = Button1
-				case 0x4:
 					ev.Key = Button2
-				case 0x8:
-					ev.Key = Button3
-				case 0x10:
-					ev.Key = Button4
 				case 0x2:
-					ev.Key = Button5
+					ev.Key = Button4
 				}
 				input_comm <- ev
 			}
