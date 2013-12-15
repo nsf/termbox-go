@@ -602,16 +602,12 @@ func pretty_print_mouse(ev *termbox.Event) {
 	printf_tb(3, 19, termbox.ColorWhite, termbox.ColorBlack, "Mouse event: %d x %d", ev.MouseX, ev.MouseY)
 	button := ""
 	switch ev.Key {
-	case termbox.Button1:
-		button = "Button1"
-	case termbox.Button2:
-		button = "Button2"
-	case termbox.Button3:
-		button = "Button3"
-	case termbox.Button4:
-		button = "Button4"
-	case termbox.Button5:
-		button = "Button5"
+	case termbox.MouseLeft:
+		button = "MouseLeft"
+	case termbox.MouseMid:
+		button = "MouseMid"
+	case termbox.MouseRight:
+		button = "MouseRight"
 	}
 	printf_tb(43, 19, termbox.ColorWhite, termbox.ColorBlack, "Key: ")
 	printf_tb(48, 19, termbox.ColorYellow, termbox.ColorBlack, button)

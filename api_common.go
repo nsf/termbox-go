@@ -60,11 +60,9 @@ const (
 	KeyArrowLeft
 	KeyArrowRight
 	key_min // see terminfo
-	Button1
-	Button2
-	Button3
-	Button4
-	Button5
+	MouseLeft
+	MouseMid
+	MouseRight
 )
 
 const (

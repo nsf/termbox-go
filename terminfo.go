@@ -171,8 +171,8 @@ func setup_term() (err error) {
 			return
 		}
 	}
-	funcs[t_max_funcs-2] = "\x1b[?9h"
-	funcs[t_max_funcs-1] = "\x1b[?9l"
+	funcs[t_max_funcs-2] = "\x1b[?1000h"
+	funcs[t_max_funcs-1] = "\x1b[?1000l"
 	return nil
 }
 

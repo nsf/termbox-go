@@ -696,9 +696,9 @@ func input_event_producer() {
 				}
 				switch mr.button_state {
 				case 0x1:
-					ev.Key = Button2
+					ev.Key = MouseLeft
 				case 0x2:
-					ev.Key = Button4
+					ev.Key = MouseRight
 				}
 				input_comm <- ev
 			}
