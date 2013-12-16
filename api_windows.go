@@ -30,12 +30,7 @@ func Init() error {
 		return err
 	}
 
-	err = set_console_mode(in, enable_window_input)
-	if err != nil {
-		return err
-	}
-
-	err = set_console_mode(in, enable_mouse_input)
+	err = set_console_mode(in, enable_window_input|enable_mouse_input)
 	if err != nil {
 		return err
 	}
