@@ -663,6 +663,7 @@ func key_event_record_to_event(r *key_event_record) (Event, bool) {
 func input_event_producer() {
 	var r input_record
 	var err error
+	mouseRelease := false
 	for {
 		err = read_console_input(in, &r)
 		if err != nil {
@@ -687,8 +688,19 @@ func input_event_producer() {
 			}
 		case mouse_event:
 			mr := *(*mouse_event_record)(unsafe.Pointer(&r.event))
-			// single click
-			if mr.event_flags == 0 {
+			// single or double click
+			if mr.event_flags == 0 || mr.event_flags == 2 {
+				// handle desync
+				if mouseRelease && mr.event_flags != 0 {
+					mouseRelease = false
+				}
+				if mouseRelease {
+					// ignore release
+					mouseRelease = false
+					continue
+				} else {
+					mouseRelease = true
+				}
 				ev := Event{
 					Type:   EventMouse,
 					MouseX: int(mr.mouse_pos.x),
@@ -701,6 +713,9 @@ func input_event_producer() {
 					ev.Key = MouseRight
 				}
 				input_comm <- ev
+			} else {
+				// get ready for the next click
+				mouseRelease = false
 			}
 		}
 	}
