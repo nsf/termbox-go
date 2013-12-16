@@ -213,11 +213,11 @@ func tcgetattr(fd uintptr, termios *syscall_Termios) error {
 	return nil
 }
 
-func parse_escape_sequence(event *Event, buf []byte) int {
+func parse_escape_sequence(event *Event, buf []byte) (int, bool) {
 	bufstr := string(buf)
 	// mouse
 	if len(bufstr) >= 6 && strings.HasPrefix(bufstr, "\033[M") {
-		event.Type = EventMouse // KeyEvent by default
+		mouseRelease := false
 		switch buf[3] & 3 {
 		case 0:
 			event.Key = MouseLeft
@@ -225,25 +225,32 @@ func parse_escape_sequence(event *Event, buf []byte) int {
 			event.Key = MouseMid
 		case 2:
 			event.Key = MouseRight
+		case 3:
+			mouseRelease = true
 		}
-		// wheel up outputs MouseLeft
-		if buf[3] == 0x60 {
-			event.Key = MouseMid
+		if mouseRelease {
+			return 6, false
+		} else {
+			event.Type = EventMouse // KeyEvent by default
+			// wheel up outputs MouseLeft
+			if buf[3] == 0x60 {
+				event.Key = MouseMid
+			}
+			// the coord is 1,1 for upper left
+			event.MouseX = int(buf[4]) - 1 - 32
+			event.MouseY = int(buf[5]) - 1 - 32
+			return 6, true
 		}
-		// the coord is 1,1 for upper left
-		event.MouseX = int(buf[4]) - 1 - 32
-		event.MouseY = int(buf[5]) - 1 - 32
-		return 6
 	}
 
 	for i, key := range keys {
 		if strings.HasPrefix(bufstr, key) {
 			event.Ch = 0
 			event.Key = Key(0xFFFF - i)
-			return len(key)
+			return len(key), true
 		}
 	}
-	return 0
+	return 0, true
 }
 
 func extract_event(event *Event) bool {
@@ -253,11 +260,11 @@ func extract_event(event *Event) bool {
 
 	if inbuf[0] == '\033' {
 		// possible escape sequence
-		n := parse_escape_sequence(event, inbuf)
+		n, ok := parse_escape_sequence(event, inbuf)
 		if n != 0 {
 			copy(inbuf, inbuf[n:])
 			inbuf = inbuf[:len(inbuf)-n]
-			return true
+			return ok
 		}
 
 		// it's not escape sequence, then it's Alt or Esc, check input_mode
