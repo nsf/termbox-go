@@ -54,6 +54,12 @@ type (
 	}
 )
 
+const (
+	mouse_lmb = 0x1
+	mouse_rmb = 0x2
+	mouse_mmb = 0x4 | 0x8 | 0x10
+)
+
 func (this coord) uintptr() uintptr {
 	return uintptr(*(*int32)(unsafe.Pointer(&this)))
 }
@@ -663,7 +669,8 @@ func key_event_record_to_event(r *key_event_record) (Event, bool) {
 func input_event_producer() {
 	var r input_record
 	var err error
-	mouseRelease := false
+	var last_button Key
+	var last_state = dword(0)
 	for {
 		err = read_console_input(in, &r)
 		if err != nil {
@@ -688,33 +695,31 @@ func input_event_producer() {
 			}
 		case mouse_event:
 			mr := *(*mouse_event_record)(unsafe.Pointer(&r.event))
+
 			// single or double click
-			if mr.event_flags == 0 || mr.event_flags == 2 {
-				// handle desync
-				mouseRelease = mouseRelease && mr.event_flags == 0
-				if mouseRelease {
-					// ignore release
-					mouseRelease = false
+			switch mr.event_flags {
+			case 0:
+				cur_state := mr.button_state
+				switch {
+				case last_state&mouse_lmb == 0 && cur_state&mouse_lmb != 0:
+					last_button = MouseLeft
+				case last_state&mouse_rmb == 0 && cur_state&mouse_rmb != 0:
+					last_button = MouseRight
+				case last_state&mouse_mmb == 0 && cur_state&mouse_mmb != 0:
+					last_button = MouseMiddle
+				default:
+					last_state = cur_state
 					continue
 				}
-				mouseRelease = true
-				ev := Event{
+				last_state = cur_state
+				fallthrough
+			case 2:
+				input_comm <- Event{
 					Type:   EventMouse,
+					Key:    last_button,
 					MouseX: int(mr.mouse_pos.x),
 					MouseY: int(mr.mouse_pos.y),
 				}
-				switch mr.button_state {
-				case 0x1:
-					ev.Key = MouseLeft
-				case 0x2:
-					ev.Key = MouseRight
-				default:
-					ev.Key = MouseMiddle
-				}
-				input_comm <- ev
-			} else {
-				// get ready for the next click
-				mouseRelease = false
 			}
 		}
 	}

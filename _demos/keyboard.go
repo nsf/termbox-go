@@ -598,19 +598,22 @@ func pretty_print_resize(ev *termbox.Event) {
 	printf_tb(3, 19, termbox.ColorWhite, termbox.ColorBlack, "Resize event: %d x %d", ev.Width, ev.Height)
 }
 
+var counter = 0
+
 func pretty_print_mouse(ev *termbox.Event) {
 	printf_tb(3, 19, termbox.ColorWhite, termbox.ColorBlack, "Mouse event: %d x %d", ev.MouseX, ev.MouseY)
 	button := ""
 	switch ev.Key {
 	case termbox.MouseLeft:
-		button = "MouseLeft"
+		button = "MouseLeft: %d"
 	case termbox.MouseMiddle:
-		button = "MouseMiddle"
+		button = "MouseMiddle: %d"
 	case termbox.MouseRight:
-		button = "MouseRight"
+		button = "MouseRight: %d"
 	}
+	counter++
 	printf_tb(43, 19, termbox.ColorWhite, termbox.ColorBlack, "Key: ")
-	printf_tb(48, 19, termbox.ColorYellow, termbox.ColorBlack, button)
+	printf_tb(48, 19, termbox.ColorYellow, termbox.ColorBlack, button, counter)
 }
 
 func dispatch_press(ev *termbox.Event) {
