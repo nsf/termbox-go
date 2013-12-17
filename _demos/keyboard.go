@@ -673,8 +673,8 @@ loop:
 				chmap := []termbox.InputMode{
 					termbox.InputEsc | termbox.InputMouse,
 					termbox.InputAlt | termbox.InputMouse,
-					termbox.InputAlt,
 					termbox.InputEsc,
+					termbox.InputAlt,
 				}
 				inputmode++
 				if inputmode >= len(chmap) {
