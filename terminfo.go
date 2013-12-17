@@ -163,12 +163,16 @@ func setup_term() (err error) {
 		}
 	}
 	funcs = make([]string, t_max_funcs)
-	for i, _ := range funcs {
+	// the last two entries are reserved for mouse. because the table offset is
+	// not there, the two entries have to fill in manually
+	for i, _ := range funcs[:len(funcs)-2] {
 		funcs[i], err = ti_read_string(rd, str_offset+2*ti_funcs[i], table_offset)
 		if err != nil {
 			return
 		}
 	}
+	funcs[t_max_funcs-2] = "\x1b[?1000h"
+	funcs[t_max_funcs-1] = "\x1b[?1000l"
 	return nil
 }
 
