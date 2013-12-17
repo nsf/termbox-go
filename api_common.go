@@ -61,7 +61,7 @@ const (
 	KeyArrowRight
 	key_min // see terminfo
 	MouseLeft
-	MouseMid
+	MouseMiddle
 	MouseRight
 )
 

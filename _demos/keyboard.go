@@ -604,8 +604,8 @@ func pretty_print_mouse(ev *termbox.Event) {
 	switch ev.Key {
 	case termbox.MouseLeft:
 		button = "MouseLeft"
-	case termbox.MouseMid:
-		button = "MouseMid"
+	case termbox.MouseMiddle:
+		button = "MouseMiddle"
 	case termbox.MouseRight:
 		button = "MouseRight"
 	}

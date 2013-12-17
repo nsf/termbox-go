@@ -664,6 +664,7 @@ func input_event_producer() {
 	var r input_record
 	var err error
 	mouseRelease := false
+	var prevButton dword
 	for {
 		err = read_console_input(in, &r)
 		if err != nil {
@@ -691,16 +692,14 @@ func input_event_producer() {
 			// single or double click
 			if mr.event_flags == 0 || mr.event_flags == 2 {
 				// handle desync
-				if mouseRelease && mr.event_flags != 0 {
-					mouseRelease = false
-				}
+				mouseRelease = mouseRelease && mr.event_flag == 0 && prevButton == mr.button_state
+				prevButton = mr.button_state
 				if mouseRelease {
 					// ignore release
 					mouseRelease = false
 					continue
-				} else {
-					mouseRelease = true
 				}
+				mouseRelease = true
 				ev := Event{
 					Type:   EventMouse,
 					MouseX: int(mr.mouse_pos.x),
@@ -711,11 +710,14 @@ func input_event_producer() {
 					ev.Key = MouseLeft
 				case 0x2:
 					ev.Key = MouseRight
+				default:
+					ev.Key = MouseMiddle
 				}
 				input_comm <- ev
 			} else {
 				// get ready for the next click
 				mouseRelease = false
+				prevButton = 0
 			}
 		}
 	}
