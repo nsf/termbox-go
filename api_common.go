@@ -142,9 +142,10 @@ const (
 
 // Input mode. See SetInputMode function.
 const (
-	InputCurrent InputMode = iota
-	InputEsc
+	InputEsc InputMode = 1 << iota
 	InputAlt
+	InputMouse
+	InputCurrent InputMode = 0
 )
 
 // Event type. See Event.Type field.

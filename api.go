@@ -71,7 +71,6 @@ func Init() error {
 
 	out.WriteString(funcs[t_enter_ca])
 	out.WriteString(funcs[t_enter_keypad])
-	out.WriteString(funcs[t_enter_mouse])
 	out.WriteString(funcs[t_hide_cursor])
 	out.WriteString(funcs[t_clear_screen])
 
@@ -277,16 +276,26 @@ func Clear(fg, bg Attribute) error {
 // Sets termbox input mode. Termbox has two input modes:
 //
 // 1. Esc input mode. When ESC sequence is in the buffer and it doesn't match
-// any known sequence. ESC means KeyEsc.
+// any known sequence. ESC means KeyEsc. This is the default input mode.
 //
 // 2. Alt input mode. When ESC sequence is in the buffer and it doesn't match
 // any known sequence. ESC enables ModAlt modifier for the next keyboard event.
 //
+// Both input modes can be OR'ed with Mouse mode. Setting Mouse mode bit up will
+// enable mouse button click events.
+//
 // If 'mode' is InputCurrent, returns the current input mode. See also Input*
 // constants.
 func SetInputMode(mode InputMode) InputMode {
-	if mode != InputCurrent {
-		input_mode = mode
+	if mode == InputCurrent {
+		return input_mode
 	}
+	if mode & InputMouse != 0 {
+		out.WriteString(funcs[t_enter_mouse])
+	} else {
+		out.WriteString(funcs[t_exit_mouse])
+	}
+
+	input_mode = mode
 	return input_mode
 }

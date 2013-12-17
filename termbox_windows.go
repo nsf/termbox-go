@@ -521,7 +521,7 @@ func key_event_record_to_event(r *key_event_record) (Event, bool) {
 	}
 
 	e := Event{Type: EventKey}
-	if input_mode == InputAlt {
+	if input_mode & InputAlt != 0 {
 		if alt_mode_esc {
 			e.Mod = ModAlt
 			alt_mode_esc = false
@@ -599,10 +599,10 @@ func key_event_record_to_event(r *key_event_record) (Event, bool) {
 		case vk_enter:
 			e.Key = KeyEnter
 		case vk_esc:
-			switch input_mode {
-			case InputEsc:
+			switch {
+			case input_mode & InputEsc != 0:
 				e.Key = KeyEsc
-			case InputAlt:
+			case input_mode & InputAlt != 0:
 				alt_mode_esc = true
 				return Event{}, false
 			}
@@ -624,7 +624,7 @@ func key_event_record_to_event(r *key_event_record) (Event, bool) {
 	if ctrlpressed {
 		if Key(r.unicode_char) >= KeyCtrlA && Key(r.unicode_char) <= KeyCtrlRsqBracket {
 			e.Key = Key(r.unicode_char)
-			if input_mode == InputAlt && e.Key == KeyEsc {
+			if input_mode & InputAlt != 0 && e.Key == KeyEsc {
 				alt_mode_esc = true
 				return Event{}, false
 			}
@@ -636,7 +636,7 @@ func key_event_record_to_event(r *key_event_record) (Event, bool) {
 			e.Key = KeyCtrl2
 			return e, true
 		case 51:
-			if input_mode == InputAlt {
+			if input_mode & InputAlt != 0 {
 				alt_mode_esc = true
 				return Event{}, false
 			}

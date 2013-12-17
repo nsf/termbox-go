@@ -493,13 +493,19 @@ func draw_keyboard() {
 	printf_tb(21, 2, termbox.ColorMagenta, termbox.ColorBlack, "(press CTRL+X and then CTRL+Q to exit)")
 	printf_tb(15, 3, termbox.ColorMagenta, termbox.ColorBlack, "(press CTRL+X and then CTRL+C to change input mode)")
 
-	var inputmodemap = []string{
-		"",
-		"termbox.InputEsc",
-		"termbox.InputAlt",
+	inputmode := termbox.SetInputMode(termbox.InputCurrent)
+	inputmode_str := ""
+	switch {
+	case inputmode & termbox.InputEsc != 0:
+		inputmode_str = "termbox.InputEsc"
+	case inputmode & termbox.InputAlt != 0:
+		inputmode_str = "termbox.InputAlt"
 	}
-	printf_tb(3, 18, termbox.ColorWhite, termbox.ColorBlack, "Input mode: %s",
-		inputmodemap[termbox.SetInputMode(termbox.InputCurrent)])
+
+	if inputmode & termbox.InputMouse != 0 {
+		inputmode_str += " | termbox.InputMouse"
+	}
+	printf_tb(3, 18, termbox.ColorWhite, termbox.ColorBlack, "Input mode: %s", inputmode_str)
 }
 
 var fcmap = []string{
@@ -581,17 +587,17 @@ func pretty_print_press(ev *termbox.Event) {
 	printf_tb(8, 21, termbox.ColorCyan, termbox.ColorBlack, "octal:   0%o", ev.Key)
 	printf_tb(8, 22, termbox.ColorRed, termbox.ColorBlack, "string:  %s", funckeymap(ev.Key))
 
-	printf_tb(43, 19, termbox.ColorWhite, termbox.ColorBlack, "Char: ")
-	printf_tb(49, 19, termbox.ColorYellow, termbox.ColorBlack, "decimal: %d", ev.Ch)
-	printf_tb(49, 20, termbox.ColorGreen, termbox.ColorBlack, "hex:     0x%X", ev.Ch)
-	printf_tb(49, 21, termbox.ColorCyan, termbox.ColorBlack, "octal:   0%o", ev.Ch)
-	printf_tb(49, 22, termbox.ColorRed, termbox.ColorBlack, "string:  %s", string(ev.Ch))
+	printf_tb(54, 19, termbox.ColorWhite, termbox.ColorBlack, "Char: ")
+	printf_tb(60, 19, termbox.ColorYellow, termbox.ColorBlack, "decimal: %d", ev.Ch)
+	printf_tb(60, 20, termbox.ColorGreen, termbox.ColorBlack, "hex:     0x%X", ev.Ch)
+	printf_tb(60, 21, termbox.ColorCyan, termbox.ColorBlack, "octal:   0%o", ev.Ch)
+	printf_tb(60, 22, termbox.ColorRed, termbox.ColorBlack, "string:  %s", string(ev.Ch))
 
 	modifier := "none"
 	if ev.Mod != 0 {
 		modifier = "termbox.ModAlt"
 	}
-	printf_tb(43, 18, termbox.ColorWhite, termbox.ColorBlack, "Modifier: %s", modifier)
+	printf_tb(54, 18, termbox.ColorWhite, termbox.ColorBlack, "Modifier: %s", modifier)
 }
 
 func pretty_print_resize(ev *termbox.Event) {
@@ -649,11 +655,12 @@ func main() {
 	}
 	defer termbox.Close()
 
-	termbox.SetInputMode(termbox.InputEsc)
+	termbox.SetInputMode(termbox.InputEsc | termbox.InputMouse)
 
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 	draw_keyboard()
 	termbox.Flush()
+	inputmode := 0
 	ctrlxpressed := false
 loop:
 	for {
@@ -664,12 +671,16 @@ loop:
 			}
 			if ev.Key == termbox.KeyCtrlC && ctrlxpressed {
 				chmap := []termbox.InputMode{
-					0,
+					termbox.InputEsc | termbox.InputMouse,
+					termbox.InputAlt | termbox.InputMouse,
 					termbox.InputAlt,
 					termbox.InputEsc,
 				}
-				termbox.SetInputMode(
-					chmap[termbox.SetInputMode(termbox.InputCurrent)])
+				inputmode++
+				if inputmode >= len(chmap) {
+					inputmode = 0
+				}
+				termbox.SetInputMode(chmap[inputmode])
 			}
 			if ev.Key == termbox.KeyCtrlX {
 				ctrlxpressed = true
