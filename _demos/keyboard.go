@@ -666,6 +666,9 @@ loop:
 	for {
 		switch ev := termbox.PollEvent(); ev.Type {
 		case termbox.EventKey:
+			if ev.Key == termbox.KeyCtrlS && ctrlxpressed {
+				termbox.Sync()
+			}
 			if ev.Key == termbox.KeyCtrlQ && ctrlxpressed {
 				break loop
 			}
