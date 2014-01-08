@@ -22,7 +22,7 @@ func fill(x, y, w, h int, cell termbox.Cell) {
 
 func rune_advance_len(r rune, pos int) int {
 	if r == '\t' {
-		return tabstop_length - pos % tabstop_length
+		return tabstop_length - pos%tabstop_length
 	}
 	return 1
 }
@@ -67,8 +67,8 @@ const preferred_horizontal_threshold = 5
 const tabstop_length = 8
 
 type EditBox struct {
-	text []byte
-	line_voffset int
+	text           []byte
+	line_voffset   int
 	cursor_boffset int // cursor offset in bytes
 	cursor_voffset int // visual cursor offset in termbox cells
 	cursor_coffset int // cursor offset in unicode code points
@@ -79,7 +79,7 @@ func (eb *EditBox) Draw(x, y, w, h int) {
 	eb.AdjustVOffset(w)
 
 	const coldef = termbox.ColorDefault
-	fill(x, y, w, h, termbox.Cell{Ch:' '})
+	fill(x, y, w, h, termbox.Cell{Ch: ' '})
 
 	t := eb.text
 	lx := 0
@@ -95,7 +95,7 @@ func (eb *EditBox) Draw(x, y, w, h int) {
 		}
 
 		if rx >= w {
-			termbox.SetCell(x + w - 1, y, '→',
+			termbox.SetCell(x+w-1, y, '→',
 				coldef, coldef)
 			break
 		}
@@ -109,16 +109,16 @@ func (eb *EditBox) Draw(x, y, w, h int) {
 				}
 
 				if rx >= 0 {
-					termbox.SetCell(x + rx, y, ' ', coldef, coldef)
+					termbox.SetCell(x+rx, y, ' ', coldef, coldef)
 				}
 			}
 		} else {
 			if rx >= 0 {
-				termbox.SetCell(x + rx, y, r, coldef, coldef)
+				termbox.SetCell(x+rx, y, r, coldef, coldef)
 			}
 			lx += 1
 		}
-next:
+	next:
 		t = t[size:]
 	}
 
@@ -139,11 +139,11 @@ func (eb *EditBox) AdjustVOffset(width int) {
 	if eb.line_voffset != 0 {
 		threshold = width - ht
 	}
-	if eb.cursor_voffset - eb.line_voffset >= threshold {
+	if eb.cursor_voffset-eb.line_voffset >= threshold {
 		eb.line_voffset = eb.cursor_voffset + (ht - width + 1)
 	}
 
-	if eb.line_voffset != 0 && eb.cursor_voffset - eb.line_voffset < ht {
+	if eb.line_voffset != 0 && eb.cursor_voffset-eb.line_voffset < ht {
 		eb.line_voffset = eb.cursor_voffset - ht
 		if eb.line_voffset < 0 {
 			eb.line_voffset = 0
@@ -195,7 +195,7 @@ func (eb *EditBox) DeleteRuneBackward() {
 
 	eb.MoveCursorOneRuneBackward()
 	_, size := eb.RuneUnderCursor()
-	eb.text = byte_slice_remove(eb.text, eb.cursor_boffset, eb.cursor_boffset + size)
+	eb.text = byte_slice_remove(eb.text, eb.cursor_boffset, eb.cursor_boffset+size)
 }
 
 func (eb *EditBox) DeleteRuneForward() {
@@ -203,7 +203,7 @@ func (eb *EditBox) DeleteRuneForward() {
 		return
 	}
 	_, size := eb.RuneUnderCursor()
-	eb.text = byte_slice_remove(eb.text, eb.cursor_boffset, eb.cursor_boffset + size)
+	eb.text = byte_slice_remove(eb.text, eb.cursor_boffset, eb.cursor_boffset+size)
 }
 
 func (eb *EditBox) DeleteTheRestOfTheLine() {
@@ -224,6 +224,7 @@ func (eb *EditBox) CursorX() int {
 }
 
 var edit_box EditBox
+
 const edit_box_width = 30
 
 func redraw_all() {
@@ -235,17 +236,17 @@ func redraw_all() {
 	midx := (w - edit_box_width) / 2
 
 	// unicode box drawing chars around the edit box
-	termbox.SetCell(midx - 1, midy, '│', coldef, coldef)
-	termbox.SetCell(midx + edit_box_width, midy, '│', coldef, coldef)
-	termbox.SetCell(midx - 1, midy-1, '┌', coldef, coldef)
-	termbox.SetCell(midx - 1, midy+1, '└', coldef, coldef)
-	termbox.SetCell(midx + edit_box_width, midy-1, '┐', coldef, coldef)
-	termbox.SetCell(midx + edit_box_width, midy+1, '┘', coldef, coldef)
-	fill(midx, midy-1, edit_box_width, 1, termbox.Cell{Ch:'─'})
-	fill(midx, midy+1, edit_box_width, 1, termbox.Cell{Ch:'─'})
+	termbox.SetCell(midx-1, midy, '│', coldef, coldef)
+	termbox.SetCell(midx+edit_box_width, midy, '│', coldef, coldef)
+	termbox.SetCell(midx-1, midy-1, '┌', coldef, coldef)
+	termbox.SetCell(midx-1, midy+1, '└', coldef, coldef)
+	termbox.SetCell(midx+edit_box_width, midy-1, '┐', coldef, coldef)
+	termbox.SetCell(midx+edit_box_width, midy+1, '┘', coldef, coldef)
+	fill(midx, midy-1, edit_box_width, 1, termbox.Cell{Ch: '─'})
+	fill(midx, midy+1, edit_box_width, 1, termbox.Cell{Ch: '─'})
 
 	edit_box.Draw(midx, midy, edit_box_width, 1)
-	termbox.SetCursor(midx + edit_box.CursorX(), midy)
+	termbox.SetCursor(midx+edit_box.CursorX(), midy)
 
 	tbprint(midx+6, midy+3, coldef, coldef, "Press ESC to quit")
 	termbox.Flush()
