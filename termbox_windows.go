@@ -373,6 +373,8 @@ func prepare_diff_messages() {
 	diffbuf = diffbuf[:0]
 	beg_x = -1
 
+	off_i := 0
+	off_x := 0
 	for y := 0; y < front_buffer.height; y++ {
 		line_offset := y * front_buffer.width
 		for x := 0; x < front_buffer.width; {
@@ -386,7 +388,7 @@ func prepare_diff_messages() {
 					// commit it
 					diffbuf = append(diffbuf, diff_msg{
 						coord{short(beg_x), short(beg_y)},
-						attrsbuf[beg_i:],
+						attrsbuf[off_x:],
 						charsbuf[beg_i:],
 					})
 					beg_x = -1
@@ -402,9 +404,11 @@ func prepare_diff_messages() {
 				// no started sequence, start one
 				beg_x, beg_y = x, y
 				beg_i = len(charsbuf)
+				off_x = beg_i + off_i
+				off_i = 0
 			}
 			attr, char := cell_to_char_info(*back)
-			if w == 2 && x == front_buffer.width-1 {
+			if w == 2 && x == front_buffer.width-1 && false {
 				// not enough space for a 2-cells rune,
 				// let's just put a space in there
 				front.Ch = ' '
@@ -420,19 +424,20 @@ func prepare_diff_messages() {
 				// characters, it's not true, but in
 				// most cases it is
 				attrsbuf = append(attrsbuf, attr)
-				charsbuf = append(charsbuf, char[1])
+				off_i ++
+				//charsbuf = append(charsbuf, char[1])
 
 				// for wide runes we also trash the next cell,
 				// so that it gets updated correctly later, we
 				// never get there if the wide rune happened to
 				// be in the last cell of the line, no need to
 				// check for bounds
-				next := cell_offset + 1
-				front_buffer.cells[next] = Cell{
+				//next := cell_offset + 1
+				/*front_buffer.cells[next] = Cell{
 					Ch: 0,
 					Fg: back.Fg,
 					Bg: back.Bg,
-				}
+				}*/
 			}
 			x += w
 		}
@@ -443,7 +448,7 @@ func prepare_diff_messages() {
 		// commit it
 		diffbuf = append(diffbuf, diff_msg{
 			coord{short(beg_x), short(beg_y)},
-			attrsbuf[beg_i:],
+			attrsbuf[off_x:],
 			charsbuf[beg_i:],
 		})
 	}
