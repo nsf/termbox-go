@@ -373,6 +373,8 @@ func prepare_diff_messages() {
 	diffbuf = diffbuf[:0]
 	beg_x = -1
 
+        attr_beg_i := 0
+
 	for y := 0; y < front_buffer.height; y++ {
 		line_offset := y * front_buffer.width
 		for x := 0; x < front_buffer.width; {
@@ -386,7 +388,7 @@ func prepare_diff_messages() {
 					// commit it
 					diffbuf = append(diffbuf, diff_msg{
 						coord{short(beg_x), short(beg_y)},
-						attrsbuf[beg_i:],
+						attrsbuf[attr_beg_i:],
 						charsbuf[beg_i:],
 					})
 					beg_x = -1
@@ -402,6 +404,7 @@ func prepare_diff_messages() {
 				// no started sequence, start one
 				beg_x, beg_y = x, y
 				beg_i = len(charsbuf)
+                                attr_beg_i = len(attrsbuf)
 			}
 			attr, char := cell_to_char_info(*back)
 			if w == 2 && x == front_buffer.width-1 {
@@ -420,7 +423,9 @@ func prepare_diff_messages() {
 				// characters, it's not true, but in
 				// most cases it is
 				attrsbuf = append(attrsbuf, attr)
-				charsbuf = append(charsbuf, char[1])
+                                if char[1] != ' ' {
+                                        charsbuf = append(charsbuf, char[1])
+                                }
 
 				// for wide runes we also trash the next cell,
 				// so that it gets updated correctly later, we
@@ -443,7 +448,7 @@ func prepare_diff_messages() {
 		// commit it
 		diffbuf = append(diffbuf, diff_msg{
 			coord{short(beg_x), short(beg_y)},
-			attrsbuf[beg_i:],
+			attrsbuf[attr_beg_i:],
 			charsbuf[beg_i:],
 		})
 	}
