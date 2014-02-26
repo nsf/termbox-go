@@ -264,7 +264,7 @@ func extract_event(event *Event) bool {
 
 		// it's not escape sequence, then it's Alt or Esc, check input_mode
 		switch {
-		case input_mode & InputEsc != 0:
+		case input_mode&InputEsc != 0:
 			// if we're in escape mode, fill Esc event, pop buffer, return success
 			event.Ch = 0
 			event.Key = KeyEsc
@@ -272,7 +272,7 @@ func extract_event(event *Event) bool {
 			copy(inbuf, inbuf[1:])
 			inbuf = inbuf[:len(inbuf)-1]
 			return true
-		case input_mode & InputAlt != 0:
+		case input_mode&InputAlt != 0:
 			// if we're in alt mode, set Alt modifier to event and redo parsing
 			event.Mod = ModAlt
 			copy(inbuf, inbuf[1:])
