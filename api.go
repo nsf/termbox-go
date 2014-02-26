@@ -290,7 +290,7 @@ func SetInputMode(mode InputMode) InputMode {
 	if mode == InputCurrent {
 		return input_mode
 	}
-	if mode & InputMouse != 0 {
+	if mode&InputMouse != 0 {
 		out.WriteString(funcs[t_enter_mouse])
 	} else {
 		out.WriteString(funcs[t_exit_mouse])
