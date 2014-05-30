@@ -1,6 +1,9 @@
 package termbox
 
-import "syscall"
+import (
+	"os"
+	"syscall"
+)
 
 // public API
 
@@ -30,9 +33,13 @@ func Init() error {
 		return err
 	}
 
-	err = set_console_mode(in, enable_window_input)
-	if err != nil {
-		return err
+	if fin, err := os.Open("CONIN$"); err == nil {
+		if in == syscall.Handle(fin.Fd()) {
+			err = set_console_mode(in, enable_window_input)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	orig_screen = out
