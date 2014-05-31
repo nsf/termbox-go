@@ -104,6 +104,7 @@ func Init() error {
 		}
 	}()
 
+	IsInit = true
 	return nil
 }
 
@@ -136,6 +137,7 @@ func Close() {
 	cursor_y = cursor_hidden
 	foreground = ColorDefault
 	background = ColorDefault
+	IsInit = false
 }
 
 // Synchronizes the internal back buffer with the terminal.

@@ -35,6 +35,11 @@ type Cell struct {
 	Bg Attribute
 }
 
+// To know if termbox has been initialized or not
+var (
+	IsInit bool = false
+)
+
 // Key constants, see Event.Key field.
 const (
 	KeyF1 Key = 0xFFFF - iota
