@@ -160,3 +160,72 @@ const (
 	EventMouse
 	EventError
 )
+
+const UnknownStringIdentifier string = "<unknown>"
+
+var key2string = map[Key]string{
+	KeyF1: "F1",
+	KeyF2: "F2",
+	KeyF3: "F3",
+	// ... TODO
+	KeyInsert: "insert",
+	KeyDelete: "delete",
+	KeyHome:   "home",
+	KeyEnd:    "end",
+	KeyPgup:   "pgup",
+	KeyPgdn:   "pgdn",
+	// ... TODO
+	MouseLeft:   "mouseleft",
+	MouseMiddle: "mousemiddle",
+	MouseRight:  "mouseright",
+}
+
+func (k Key) String() string {
+	s, ok := key2string[k]
+	if ok {
+		return s
+	} else {
+		return UnknownStringIdentifier
+	}
+}
+
+func StringToKey(s string) (Key, bool) {
+	for key, name := range key2string {
+		if s == name {
+			return key, true
+		}
+	}
+	return 0, false
+}
+
+var color2string = map[Attribute]string{
+	ColorDefault: "defaultcolor",
+	ColorBlack:   "black",
+	ColorRed:     "red",
+	ColorGreen:   "green",
+	ColorYellow:  "yellow",
+	ColorBlue:    "blue",
+	ColorMagenta: "magenta",
+	ColorCyan:    "cyan",
+	ColorWhite:   "white",
+}
+
+func (a Attribute) String() string {
+	a &= (ColorDefault | ColorBlack | ColorRed | ColorGreen | ColorYellow |
+		ColorBlue | ColorMagenta | ColorCyan | ColorWhite)
+	s, ok := color2string[a]
+	if ok {
+		return s
+	} else {
+		return UnknownStringIdentifier
+	}
+}
+
+func StringToColor(s string) (Attribute, bool) {
+	for color, name := range color2string {
+		if s == name {
+			return color, true
+		}
+	}
+	return 0, false
+}
