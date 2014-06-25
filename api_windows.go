@@ -181,7 +181,7 @@ func SetInputMode(mode InputMode) InputMode {
 		if err != nil {
 			panic(err)
 		}
-	} else {
+	} else if mode&InputAlt == 0 {
 		err := set_console_mode(in, enable_window_input)
 		if err != nil {
 			panic(err)
