@@ -34,6 +34,7 @@ func Init() error {
 	}
 
 	if fin, err := os.Open("CONIN$"); err == nil {
+		defer fin.Close()
 		consolewin = in == syscall.Handle(fin.Fd())
 		if consolewin {
 			err = set_console_mode(in, enable_window_input)
