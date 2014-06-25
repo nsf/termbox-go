@@ -288,6 +288,7 @@ var (
 	beg_i        = -1
 	input_comm   = make(chan Event)
 	alt_mode_esc = false
+	consolewin   = false
 
 	// these ones just to prevent heap allocs at all costs
 	tmp_info  console_screen_buffer_info

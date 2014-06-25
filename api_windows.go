@@ -34,7 +34,8 @@ func Init() error {
 	}
 
 	if fin, err := os.Open("CONIN$"); err == nil {
-		if in == syscall.Handle(fin.Fd()) {
+		consolewin = in == syscall.Handle(fin.Fd())
+		if consolewin {
 			err = set_console_mode(in, enable_window_input)
 			if err != nil {
 				return err
@@ -176,15 +177,17 @@ func SetInputMode(mode InputMode) InputMode {
 	if mode == InputCurrent {
 		return input_mode
 	}
-	if mode&InputMouse != 0 {
-		err := set_console_mode(in, enable_window_input|enable_mouse_input)
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		err := set_console_mode(in, enable_window_input)
-		if err != nil {
-			panic(err)
+	if consolewin {
+		if mode&InputMouse != 0 {
+			err := set_console_mode(in, enable_window_input|enable_mouse_input)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			err := set_console_mode(in, enable_window_input)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 
