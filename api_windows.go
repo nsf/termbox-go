@@ -33,6 +33,7 @@ func Init() error {
 		return err
 	}
 
+	consolewin = false
 	if fin, err := os.Open("CONIN$"); err == nil {
 		defer fin.Close()
 		consolewin = in == syscall.Handle(fin.Fd())
