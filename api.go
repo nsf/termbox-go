@@ -2,6 +2,7 @@
 
 package termbox
 
+import "github.com/mattn/go-runewidth"
 import "fmt"
 import "os"
 import "os/signal"
@@ -157,7 +158,7 @@ func Flush() error {
 			if back.Ch < ' ' {
 				back.Ch = ' '
 			}
-			w := rune_width(back.Ch)
+			w := runewidth.RuneWidth(back.Ch)
 			if *back == *front {
 				x += w
 				continue
