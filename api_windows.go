@@ -148,6 +148,11 @@ func PollEvent() Event {
 	return <-input_comm
 }
 
+//Alternate version of PollEvent(), this is the channel that can be called to receive type Event
+func GetInputCommChannel() (chan Event) {
+	return input_comm
+}
+
 // Returns the size of the internal back buffer (which is the same as
 // terminal's window size in characters).
 func Size() (int, int) {
