@@ -33,17 +33,8 @@ func Init() error {
 		return err
 	}
 
-	consolewin = false
-	if fin, err := os.Open("CONIN$"); err == nil {
-		defer fin.Close()
-		consolewin = in == syscall.Handle(fin.Fd())
-		if consolewin {
-			err = set_console_mode(in, enable_window_input)
-			if err != nil {
-				return err
-			}
-		}
-	}
+	err = set_console_mode(in, enable_window_input)
+	consolewin = err == nil
 
 	orig_screen = out
 	out, err = create_console_screen_buffer()

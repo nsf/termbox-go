@@ -384,6 +384,9 @@ func prepare_diff_messages() {
 			back := &back_buffer.cells[cell_offset]
 			front := &front_buffer.cells[cell_offset]
 			w := runewidth.RuneWidth(back.Ch)
+			if w == 0 {
+				w = 1
+			}
 			if *back == *front {
 				if beg_x != -1 {
 					// there is a sequence in progress,
