@@ -1,7 +1,6 @@
 package termbox
 
 import (
-	"os"
 	"syscall"
 )
 
