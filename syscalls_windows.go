@@ -19,7 +19,8 @@ const (
 	window_buffer_size_event = 0x4
 	enable_window_input      = 0x8
 	enable_mouse_input       = 0x10
-
+	enable_extended_flags    = 0x80
+	
 	vk_f1          = 0x70
 	vk_f2          = 0x71
 	vk_f3          = 0x72
