@@ -171,7 +171,7 @@ func SetInputMode(mode InputMode) InputMode {
 	}
 	if consolewin {
 		if mode&InputMouse != 0 {
-			err := set_console_mode(in, enable_window_input|enable_mouse_input)
+			err := set_console_mode(in, enable_window_input|enable_mouse_input|enable_extended_flags)
 			if err != nil {
 				panic(err)
 			}
