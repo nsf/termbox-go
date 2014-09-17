@@ -138,8 +138,10 @@ func PollEvent() Event {
 	return <-input_comm
 }
 
-// Returns the size of the internal back buffer (which is the same as
-// terminal's window size in characters).
+// Returns the size of the internal back buffer (which is mostly the same as
+// console's window size in characters). But it doesn't always match the size
+// of the console window, after the console size has changed, the internal back
+// buffer will get in sync only after Clear or Flush function calls.
 func Size() (int, int) {
 	return termw, termh
 }
