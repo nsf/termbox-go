@@ -159,6 +159,8 @@ func switch_output_mode(direction int) {
 		output_mode_index = 0
 	}
 	output_mode = termbox.SetOutputMode(available_modes[output_mode_index])
+	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+	termbox.Sync()
 }
 
 func main() {
