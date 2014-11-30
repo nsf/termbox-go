@@ -155,8 +155,7 @@ func switch_output_mode(direction int) {
 	} else if output_mode_index >= len(available_modes) {
 		output_mode_index = 0
 	}
-	output_mode = available_modes[output_mode_index]
-	termbox.SetOutputMode(output_mode)
+	output_mode = termbox.SetOutputMode(available_modes[output_mode_index])
 }
 
 func main() {

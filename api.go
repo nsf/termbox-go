@@ -305,7 +305,7 @@ func SetInputMode(mode InputMode) InputMode {
 	return input_mode
 }
 
-// Sets the termbox output mode. Termbox has three output options:
+// Sets the termbox output mode. Termbox has four output options:
 // 1. OutputNormal => [1..8]
 //    This mode provides 8 different colors:
 //        black, red, green, yellow, blue, magenta, cyan, white
@@ -326,17 +326,20 @@ func SetInputMode(mode InputMode) InputMode {
 //        SetCell(x, y, '@', 184, 240);
 //        SetCell(x, y, '@', 0xb8, 0xf0);
 //
-// 2. Output216 => [0..216]
+// 3. Output216 => [0..216]
 //    This mode supports the 3rd range of the 256 mode only.
 //    But you dont need to provide an offset.
 //
-// 3. OutputGrayscale => [0..23]
+// 4. OutputGrayscale => [0..23]
 //    This mode supports the 4th range of the 256 mode only.
 //    But you dont need to provide an offset.
 //
 // `go run _demos/output.go` to see its impact on your terminal.
 //
 // If 'mode' is OutputCurrent, it returns the current output mode.
+//
+// Note that this may return a different OutputMode than the one requested,
+// as the requested mode may not be available on the target platform.
 func SetOutputMode(mode OutputMode) OutputMode {
 	if mode == OutputCurrent {
 		return output_mode
