@@ -125,11 +125,14 @@ func draw_all() {
 					c2 := termbox.Attribute(y*64 + z*8 + x)
 					c3 := termbox.Attribute(255 - y*64 - z*8 - x)
 					c4 := termbox.Attribute(y*64 + x*4 + z*4)
+					bold := c2 | termbox.AttrBold
+					under := c3 | termbox.AttrUnderline
+					both := c1 | termbox.AttrBold | termbox.AttrUnderline
 					termbox.SetCell(z + 8*x, y, ' ', 0, bg)
 					termbox.SetCell(z + 8*x, y+5, 'n', c4, bg)
-					termbox.SetCell(z + 8*x, y+10, 'b', c2, bg)
-					termbox.SetCell(z + 8*x, y+15, 'u', c3, bg)
-					termbox.SetCell(z + 8*x, y+20, 'B', c1, bg)
+					termbox.SetCell(z + 8*x, y+10, 'b', bold, bg)
+					termbox.SetCell(z + 8*x, y+15, 'u', under, bg)
+					termbox.SetCell(z + 8*x, y+20, 'B', both, bg)
 				}
 			}
 		}
