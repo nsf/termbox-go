@@ -53,6 +53,7 @@ var (
 	termw        int
 	termh        int
 	input_mode   = InputEsc
+	output_mode  = OutputNormal
 	out          *os.File
 	in           int
 	lastfg       = attr_invalid
@@ -93,11 +94,21 @@ func write_sgr_bg(a Attribute) {
 }
 
 func write_sgr(fg, bg Attribute) {
-	outbuf.WriteString("\033[3")
-	outbuf.Write(strconv.AppendUint(intbuf, uint64(fg-1), 10))
-	outbuf.WriteString(";4")
-	outbuf.Write(strconv.AppendUint(intbuf, uint64(bg-1), 10))
-	outbuf.WriteString("m")
+	switch output_mode {
+	case Output256, Output216, OutputGrayscale:
+		outbuf.WriteString("\033[38;5;")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(fg), 10))
+		outbuf.WriteString("m")
+		outbuf.WriteString("\033[48;5;")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(bg), 10))
+		outbuf.WriteString("m")
+	default:
+		outbuf.WriteString("\033[3")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(fg-1), 10))
+		outbuf.WriteString(";4")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(bg-1), 10))
+		outbuf.WriteString("m")
+	}
 }
 
 type winsize struct {
@@ -115,10 +126,34 @@ func get_term_size(fd uintptr) (int, int) {
 }
 
 func send_attr(fg, bg Attribute) {
-	if fg != lastfg || bg != lastbg {
-		outbuf.WriteString(funcs[t_sgr0])
-		fgcol := fg & 0x0F
-		bgcol := bg & 0x0F
+	if fg == lastfg && bg == lastbg {
+		return
+	}
+
+	outbuf.WriteString(funcs[t_sgr0])
+
+	var fgcol, bgcol Attribute
+
+	switch output_mode {
+	case Output256:
+		fgcol = fg & 0xFF
+		bgcol = bg & 0xFF
+		write_sgr(fgcol, bgcol)
+	case Output216:
+		fgcol = fg & 0xFF; if fgcol > 215 { fgcol = 7 }
+		bgcol = bg & 0xFF; if bgcol > 215 { bgcol = 0 }
+		fgcol += 0x10;
+		bgcol += 0x10;
+		write_sgr(fgcol, bgcol)
+	case OutputGrayscale:
+		fgcol = fg & 0xFF; if fgcol > 23 { fg = 23 }
+		bgcol = bg & 0xFF; if bgcol > 23 { bg = 0 }
+		fgcol += 0xe8;
+		bgcol += 0xe8;
+		write_sgr(fgcol, bgcol)
+	default:
+		fgcol = fg & 0x0F
+		bgcol = bg & 0x0F
 		if fgcol != ColorDefault {
 			if bgcol != ColorDefault {
 				write_sgr(fgcol, bgcol)
@@ -128,22 +163,22 @@ func send_attr(fg, bg Attribute) {
 		} else if bgcol != ColorDefault {
 			write_sgr_bg(bgcol)
 		}
-
-		if fg&AttrBold != 0 {
-			outbuf.WriteString(funcs[t_bold])
-		}
-		if bg&AttrBold != 0 {
-			outbuf.WriteString(funcs[t_blink])
-		}
-		if fg&AttrUnderline != 0 {
-			outbuf.WriteString(funcs[t_underline])
-		}
-		if fg&AttrReverse|bg&AttrReverse != 0 {
-			outbuf.WriteString(funcs[t_reverse])
-		}
-
-		lastfg, lastbg = fg, bg
 	}
+
+	if fg&AttrBold != 0 {
+		outbuf.WriteString(funcs[t_bold])
+	}
+	if bg&AttrBold != 0 {
+		outbuf.WriteString(funcs[t_blink])
+	}
+	if fg&AttrUnderline != 0 {
+		outbuf.WriteString(funcs[t_underline])
+	}
+	if fg&AttrReverse|bg&AttrReverse != 0 {
+		outbuf.WriteString(funcs[t_reverse])
+	}
+
+	lastfg, lastbg = fg, bg
 }
 
 func send_char(x, y int, ch rune) {

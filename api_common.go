@@ -5,6 +5,7 @@ package termbox
 
 type (
 	InputMode int
+	OutputMode int
 	EventType uint8
 	Modifier  uint8
 	Key       uint16
@@ -147,7 +148,7 @@ const (
 // terminals applying AttrBold to background may result in blinking text. Use
 // them with caution and test your code on various terminals.
 const (
-	AttrBold Attribute = 1 << (iota + 4)
+	AttrBold Attribute = 1 << (iota + 8)
 	AttrUnderline
 	AttrReverse
 )
@@ -158,6 +159,15 @@ const (
 	InputAlt
 	InputMouse
 	InputCurrent InputMode = 0
+)
+
+// Output mode. See SetOutputMode function.
+const (
+	OutputCurrent OutputMode = iota
+	OutputNormal
+	Output256
+	Output216
+	OutputGrayscale
 )
 
 // Event type. See Event.Type field.

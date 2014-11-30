@@ -71,6 +71,45 @@ func draw_all() {
 	})
 	print_wide(2+len(chars), 11, hello_world)
 	termbox.Flush()
+
+	termbox.SetOutputMode(termbox.OutputGrayscale)
+	var x, y, c int
+	for x, y = 0, 23; x < 24; x++ {
+		termbox.SetCell(x, y, '@', termbox.Attribute(x), 0)
+		termbox.SetCell(x+25, y, ' ', 0, termbox.Attribute(x))
+	}
+	termbox.Flush()
+
+	termbox.SetOutputMode(termbox.Output216)
+	y++
+	for c, x = 0, 0; c < 216; c, x = c+1, x+1 {
+		if x % 24 == 0 {
+			x = 0
+			y++
+		}
+		termbox.SetCell(x, y, '@', termbox.Attribute(c), 0)
+		termbox.SetCell(x+25, y, ' ', 0, termbox.Attribute(c))
+	}
+	termbox.Flush()
+
+	termbox.SetOutputMode(termbox.Output256)
+	y++
+	for c, x = 0, 0; c < 256; c, x = c+1, x+1 {
+		if x % 24 == 0 {
+			x = 0
+			y++
+		}
+		if y & 1 != 0 {
+			termbox.SetCell(x, y, '+',
+					termbox.Attribute(c) | termbox.AttrUnderline, 0)
+		} else {
+			termbox.SetCell(x, y, '+', termbox.Attribute(c), 0)
+		}
+		termbox.SetCell(x+25, y, ' ', 0, termbox.Attribute(c))
+	}
+	termbox.Flush()
+
+	termbox.SetOutputMode(termbox.OutputNormal)
 }
 
 func main() {

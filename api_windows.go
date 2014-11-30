@@ -189,6 +189,47 @@ func SetInputMode(mode InputMode) InputMode {
 	return input_mode
 }
 
+// Sets the termbox output mode. Termbox has three output options:
+// 1. OutputNormal => [1..8]
+//    This mode provides 8 different colors:
+//        black, red, green, yellow, blue, magenta, cyan, white
+//    Shortcut: ColorBlack, ColorRed, ...
+//    Attributes: AttrBold, AttrUnderline, AttrReverse
+//
+//    Example usage:
+//        SetCell(x, y, '@', ColorBlack | AttrBold, ColorRed);
+//
+// 2. Output256 => [0..256]
+//    In this mode you can leverage the 256 terminal mode:
+//    0x00 - 0x07: the 8 colors as in OutputNormal
+//    0x08 - 0x0f: Color* | AttrBold
+//    0x10 - 0xe7: 216 different colors
+//    0xe8 - 0xff: 24 different shades of grey
+//
+//    Example usage:
+//        SetCell(x, y, '@', 184, 240);
+//        SetCell(x, y, '@', 0xb8, 0xf0);
+//
+// 2. Output216 => [0..216]
+//    This mode supports the 3rd range of the 256 mode only.
+//    But you dont need to provide an offset.
+//
+// 3. OutputGrayscale => [0..23]
+//    This mode supports the 4th range of the 256 mode only.
+//    But you dont need to provide an offset.
+//
+// `go run _demos/output.go` to see its impact on your terminal.
+//
+// If 'mode' is OutputCurrent, it returns the current output mode.
+func SetOutputMode(mode OutputMode) OutputMode {
+	if mode == OutputCurrent {
+		return output_mode
+	}
+
+	output_mode = mode
+	return output_mode
+}
+
 // Sync comes handy when something causes desync between termbox's understanding
 // of a terminal buffer and the reality. Such as a third party process. Sync
 // forces a complete resync between the termbox and a terminal, it may not be
