@@ -3,6 +3,7 @@ package main
 import "github.com/nsf/termbox-go"
 
 const chars = "nnnnnnnnnbbbbbbbbbuuuuuuuuuBBBBBBBBB"
+var output_mode = termbox.OutputNormal
 
 func next_char(current int) int {
 	current++
@@ -62,54 +63,73 @@ const hello_world = "こんにちは世界"
 
 func draw_all() {
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-	print_combinations_table(1, 1, []termbox.Attribute{
-		0,
-		termbox.AttrBold,
-	})
-	print_combinations_table(2+len(chars), 1, []termbox.Attribute{
-		termbox.AttrReverse,
-	})
-	print_wide(2+len(chars), 11, hello_world)
-	termbox.Flush()
 
-	termbox.SetOutputMode(termbox.OutputGrayscale)
-	var x, y, c int
-	for x, y = 0, 23; x < 24; x++ {
-		termbox.SetCell(x, y, '@', termbox.Attribute(x), 0)
-		termbox.SetCell(x+25, y, ' ', 0, termbox.Attribute(x))
-	}
-	termbox.Flush()
+	switch output_mode {
 
-	termbox.SetOutputMode(termbox.Output216)
-	y++
-	for c, x = 0, 0; c < 216; c, x = c+1, x+1 {
-		if x % 24 == 0 {
-			x = 0
-			y++
+	case termbox.OutputNormal:
+		print_combinations_table(1, 1, []termbox.Attribute{
+			0,
+			termbox.AttrBold,
+		})
+		print_combinations_table(2+len(chars), 1, []termbox.Attribute{
+			termbox.AttrReverse,
+		})
+		print_wide(2+len(chars), 11, hello_world)
+
+	case termbox.OutputGrayscale:
+		for x, y := 0, 0; x < 24; x++ {
+			termbox.SetCell(x, y, '@', termbox.Attribute(x), 0)
+			termbox.SetCell(x+25, y, ' ', 0, termbox.Attribute(x))
 		}
-		termbox.SetCell(x, y, '@', termbox.Attribute(c), 0)
-		termbox.SetCell(x+25, y, ' ', 0, termbox.Attribute(c))
-	}
-	termbox.Flush()
 
-	termbox.SetOutputMode(termbox.Output256)
-	y++
-	for c, x = 0, 0; c < 256; c, x = c+1, x+1 {
-		if x % 24 == 0 {
-			x = 0
-			y++
+	case termbox.Output216:
+		for x, y, c := 0, 0, 0; c < 216; c, x = c+1, x+1 {
+			if x % 24 == 0 {
+				x = 0
+				y++
+			}
+			termbox.SetCell(x, y, '@', termbox.Attribute(c), 0)
+			termbox.SetCell(x+25, y, ' ', 0, termbox.Attribute(c))
 		}
-		if y & 1 != 0 {
-			termbox.SetCell(x, y, '+',
-					termbox.Attribute(c) | termbox.AttrUnderline, 0)
-		} else {
-			termbox.SetCell(x, y, '+', termbox.Attribute(c), 0)
-		}
-		termbox.SetCell(x+25, y, ' ', 0, termbox.Attribute(c))
-	}
-	termbox.Flush()
 
-	termbox.SetOutputMode(termbox.OutputNormal)
+	case termbox.Output256:
+		for x, y, c := 0, 0, 0; c < 256; c, x = c+1, x+1 {
+			if x % 24 == 0 {
+				x = 0
+				y++
+			}
+			if y & 1 != 0 {
+				termbox.SetCell(x, y, '+',
+						termbox.Attribute(c) | termbox.AttrUnderline, 0)
+			} else {
+				termbox.SetCell(x, y, '+', termbox.Attribute(c), 0)
+			}
+			termbox.SetCell(x+25, y, ' ', 0, termbox.Attribute(c))
+		}
+
+	}
+
+	termbox.Flush()
+}
+
+var available_modes = []termbox.OutputMode {
+	termbox.OutputNormal,
+	termbox.OutputGrayscale,
+	termbox.Output216,
+	termbox.Output256,
+}
+
+var output_mode_index = 0
+
+func switch_output_mode(direction int) {
+	output_mode_index += direction
+	if output_mode_index < 0 {
+		output_mode_index = len(available_modes) - 1
+	} else if output_mode_index >= len(available_modes) {
+		output_mode_index = 0
+	}
+	output_mode = available_modes[output_mode_index]
+	termbox.SetOutputMode(output_mode)
 }
 
 func main() {
@@ -127,6 +147,12 @@ loop:
 			switch ev.Key {
 			case termbox.KeyEsc:
 				break loop
+			case termbox.KeyArrowUp, termbox.KeyArrowRight:
+				switch_output_mode(1)
+				draw_all()
+			case termbox.KeyArrowDown, termbox.KeyArrowLeft:
+				switch_output_mode(-1)
+				draw_all()
 			}
 		case termbox.EventResize:
 			draw_all()
