@@ -77,34 +77,61 @@ func draw_all() {
 		print_wide(2+len(chars), 11, hello_world)
 
 	case termbox.OutputGrayscale:
-		for x, y := 0, 0; x < 24; x++ {
-			termbox.SetCell(x, y, '@', termbox.Attribute(x), 0)
-			termbox.SetCell(x+25, y, ' ', 0, termbox.Attribute(x))
+		for y := 0; y < 24; y++ {
+			for x:= 0; x < 24; x++ {
+				termbox.SetCell(x, y, 'n',
+					termbox.Attribute(x),
+					termbox.Attribute(y))
+				termbox.SetCell(x+25, y, 'b',
+					termbox.Attribute(x) | termbox.AttrBold,
+					termbox.Attribute(23 - y))
+				termbox.SetCell(x+50, y, 'u',
+					termbox.Attribute(x) | termbox.AttrUnderline,
+					termbox.Attribute(y))
+			}
 		}
 
 	case termbox.Output216:
-		for x, y, c := 0, 0, 0; c < 216; c, x = c+1, x+1 {
-			if x % 24 == 0 {
-				x = 0
-				y++
+		for r := 0; r < 6; r++ {
+			for g := 0; g < 6; g++ {
+				for b := 0; b < 6; b++ {
+					y := r
+					x := g + 6 * b
+					c1 := termbox.Attribute(r*36 + g*6 + b)
+					bg := termbox.Attribute(g*36 + b*6 + r)
+					c2 := termbox.Attribute(b*36 + r*6 + g)
+					bc1 := c1 | termbox.AttrBold
+					uc1 := c1 | termbox.AttrUnderline
+					bc2 := c2 | termbox.AttrBold
+					uc2 := c2 | termbox.AttrUnderline
+					termbox.SetCell(x, y, 'n', c1, bg)
+					termbox.SetCell(x, y + 6, 'b', bc1, bg)
+					termbox.SetCell(x, y + 12, 'u', uc1, bg)
+					termbox.SetCell(x, y + 18, 'B', bc1 | uc1, bg)
+					termbox.SetCell(x + 37, y, 'n', c2, bg)
+					termbox.SetCell(x + 37, y + 6, 'b', bc2, bg)
+					termbox.SetCell(x + 37, y + 12, 'u', uc2, bg)
+					termbox.SetCell(x + 37, y + 18, 'B', bc2 | uc2, bg)
+				}
 			}
-			termbox.SetCell(x, y, '@', termbox.Attribute(c), 0)
-			termbox.SetCell(x+25, y, ' ', 0, termbox.Attribute(c))
 		}
 
 	case termbox.Output256:
-		for x, y, c := 0, 0, 0; c < 256; c, x = c+1, x+1 {
-			if x % 24 == 0 {
-				x = 0
-				y++
+		for y := 0; y < 4; y++ {
+			for x := 0; x < 8; x++ {
+				for z := 0; z < 8; z++ {
+					bg := termbox.Attribute(y * 64 + x * 8 + z)
+					c1 := termbox.Attribute(255 - y*64 - x*8 - z)
+					c2 := termbox.Attribute(y*64 + z*8 + x)
+					c3 := termbox.Attribute(255 - y*64 - z*8 - x)
+					c4 := termbox.Attribute(y*64 + x*4 + z*4)
+					termbox.SetCell(z + 8*x, y, ' ', 0, bg)
+					termbox.SetCell(z + 8*x, y+5, 'n', c4, bg)
+					termbox.SetCell(z + 8*x, y+10, 'b', c2, bg)
+					termbox.SetCell(z + 8*x, y+15, 'u', c3, bg)
+					termbox.SetCell(z + 8*x, y+20, 'B', c1, bg)
+				}
 			}
-			if y & 1 != 0 {
-				termbox.SetCell(x, y, '+',
-						termbox.Attribute(c) | termbox.AttrUnderline, 0)
-			} else {
-				termbox.SetCell(x, y, '+', termbox.Attribute(c), 0)
-			}
-			termbox.SetCell(x+25, y, ' ', 0, termbox.Attribute(c))
 		}
 
 	}
