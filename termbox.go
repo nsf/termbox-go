@@ -146,8 +146,8 @@ func send_attr(fg, bg Attribute) {
 		bgcol += 0x10;
 		write_sgr(fgcol, bgcol)
 	case OutputGrayscale:
-		fgcol = fg & 0xFF; if fgcol > 23 { fg = 23 }
-		bgcol = bg & 0xFF; if bgcol > 23 { bg = 0 }
+		fgcol = fg & 0xFF; if fgcol > 23 { fgcol = 23 }
+		bgcol = bg & 0xFF; if bgcol > 23 { bgcol = 0 }
 		fgcol += 0xe8;
 		bgcol += 0xe8;
 		write_sgr(fgcol, bgcol)
