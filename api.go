@@ -306,7 +306,7 @@ func SetInputMode(mode InputMode) InputMode {
 }
 
 // Sets the termbox output mode. Termbox has four output options:
-// 1. OutputNormal => [1..8]
+// 1. OutputNormal => [0..7]
 //    This mode provides 8 different colors:
 //        black, red, green, yellow, blue, magenta, cyan, white
 //    Shortcut: ColorBlack, ColorRed, ...
@@ -315,7 +315,7 @@ func SetInputMode(mode InputMode) InputMode {
 //    Example usage:
 //        SetCell(x, y, '@', ColorBlack | AttrBold, ColorRed);
 //
-// 2. Output256 => [0..256]
+// 2. Output256 => [0..255]
 //    In this mode you can leverage the 256 terminal mode:
 //    0x00 - 0x07: the 8 colors as in OutputNormal
 //    0x08 - 0x0f: Color* | AttrBold
@@ -326,7 +326,7 @@ func SetInputMode(mode InputMode) InputMode {
 //        SetCell(x, y, '@', 184, 240);
 //        SetCell(x, y, '@', 0xb8, 0xf0);
 //
-// 3. Output216 => [0..216]
+// 3. Output216 => [0..215]
 //    This mode supports the 3rd range of the 256 mode only.
 //    But you dont need to provide an offset.
 //
