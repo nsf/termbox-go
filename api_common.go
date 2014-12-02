@@ -128,8 +128,7 @@ const (
 // Cell colors, you can combine a color with multiple attributes using bitwise
 // OR ('|').
 const (
-	ColorDefault Attribute = iota
-	ColorBlack
+	ColorBlack Attribute = iota
 	ColorRed
 	ColorGreen
 	ColorYellow
@@ -148,7 +147,8 @@ const (
 // terminals applying AttrBold to background may result in blinking text. Use
 // them with caution and test your code on various terminals.
 const (
-	AttrBold Attribute = 1 << (iota + 8)
+	ColorDefault Attribute = 1 << (iota + 8)
+	AttrBold
 	AttrUnderline
 	AttrReverse
 )

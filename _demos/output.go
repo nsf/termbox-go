@@ -28,7 +28,11 @@ func print_combinations_table(sx, sy int, attrs []termbox.Attribute) {
 	draw_line := func() {
 		x := sx
 		for _, a := range all_attrs {
-			for c := termbox.ColorDefault; c <= termbox.ColorWhite; c++ {
+			c := termbox.ColorDefault
+			termbox.SetCell(x, y, rune(chars[current_char]), a | c, bg)
+			current_char = next_char(current_char)
+			x++
+			for c = termbox.ColorBlack; c <= termbox.ColorWhite; c++ {
 				fg := a | c
 				termbox.SetCell(x, y, rune(chars[current_char]), fg, bg)
 				current_char = next_char(current_char)
@@ -38,7 +42,10 @@ func print_combinations_table(sx, sy int, attrs []termbox.Attribute) {
 	}
 
 	for _, a := range attrs {
-		for c := termbox.ColorDefault; c <= termbox.ColorWhite; c++ {
+		bg = a | termbox.ColorDefault
+		draw_line()
+		y++
+		for c := termbox.ColorBlack; c <= termbox.ColorWhite; c++ {
 			bg = a | c
 			draw_line()
 			y++
@@ -89,6 +96,12 @@ func draw_all() {
 					termbox.Attribute(x) | termbox.AttrUnderline,
 					termbox.Attribute(y))
 			}
+			termbox.SetCell(76, y, 'd',
+				termbox.Attribute(y),
+				termbox.ColorDefault)
+			termbox.SetCell(77, y, 'd',
+				termbox.ColorDefault,
+				termbox.Attribute(23 - y))
 		}
 
 	case termbox.Output216:
@@ -113,6 +126,12 @@ func draw_all() {
 					termbox.SetCell(x + 37, y + 12, 'u', uc2, bg)
 					termbox.SetCell(x + 37, y + 18, 'B', bc2 | uc2, bg)
 				}
+				c1 := termbox.Attribute(g*6 + r*36)
+				c2 := termbox.Attribute(5 + g*6 + r*36)
+				termbox.SetCell(74+g, r, 'd', c1, termbox.ColorDefault)
+				termbox.SetCell(74+g, r+6, 'd', c2, termbox.ColorDefault)
+				termbox.SetCell(74+g, r+12, 'd', termbox.ColorDefault, c1)
+				termbox.SetCell(74+g, r+18, 'd', termbox.ColorDefault, c2)
 			}
 		}
 
@@ -120,7 +139,7 @@ func draw_all() {
 		for y := 0; y < 4; y++ {
 			for x := 0; x < 8; x++ {
 				for z := 0; z < 8; z++ {
-					bg := termbox.Attribute(y * 64 + x * 8 + z)
+					bg := termbox.Attribute(y*64 + x*8 + z)
 					c1 := termbox.Attribute(255 - y*64 - x*8 - z)
 					c2 := termbox.Attribute(y*64 + z*8 + x)
 					c3 := termbox.Attribute(255 - y*64 - z*8 - x)
@@ -134,6 +153,23 @@ func draw_all() {
 					termbox.SetCell(z + 8*x, y+15, 'u', under, bg)
 					termbox.SetCell(z + 8*x, y+20, 'B', both, bg)
 				}
+			}
+		}
+		for x := 0; x < 12; x++ {
+			for y := 0; y < 2; y++ {
+				c1 := termbox.Attribute(232 + y*12 + x)
+				termbox.SetCell(66+x, y, 'd', c1, termbox.ColorDefault)
+				termbox.SetCell(66+x, 2+y, 'd', termbox.ColorDefault, c1)
+			}
+		}
+		for x := 0; x < 6; x++ {
+			for y := 0; y < 6; y++ {
+				c1 := termbox.Attribute(16 + x*6 + y*36)
+				c2 := termbox.Attribute(16 + 5 + x*6 + y*36)
+				termbox.SetCell(66+x, 6+y, 'd', c1, termbox.ColorDefault)
+				termbox.SetCell(66+x, 12+y, 'd', c2, termbox.ColorDefault)
+				termbox.SetCell(72+x, 6+y, 'd', termbox.ColorDefault, c1)
+				termbox.SetCell(72+x, 12+y, 'd', termbox.ColorDefault, c2)
 			}
 		}
 
