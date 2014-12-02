@@ -1,6 +1,9 @@
 package termbox
 
 // private API, common OS agnostic part
+var (
+	output_mode  = OutputNormal
+)
 
 type cellbuf struct {
 	width  int
