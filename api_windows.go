@@ -194,8 +194,7 @@ func SetInputMode(mode InputMode) InputMode {
 // Windows console does not support extra colour modes,
 // so this will always set and return OutputNormal.
 func SetOutputMode(mode OutputMode) OutputMode {
-	output_mode = OutputNormal
-	return output_mode
+	return OutputNormal
 }
 
 // Sync comes handy when something causes desync between termbox's understanding
