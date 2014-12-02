@@ -53,7 +53,6 @@ var (
 	termw        int
 	termh        int
 	input_mode   = InputEsc
-	output_mode  = OutputNormal
 	out          *os.File
 	in           int
 	lastfg       = attr_invalid
