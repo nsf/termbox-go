@@ -82,25 +82,39 @@ func write_cursor(x, y int) {
 }
 
 func write_sgr_fg(a Attribute) {
-	outbuf.WriteString("\033[3")
-	outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
-	outbuf.WriteString("m")
+	switch output_mode {
+	case Output256, Output216, OutputGrayscale:
+		outbuf.WriteString("\033[38;5;")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
+		outbuf.WriteString("m")
+	default:
+		outbuf.WriteString("\033[3")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
+		outbuf.WriteString("m")
+	}
 }
 
 func write_sgr_bg(a Attribute) {
-	outbuf.WriteString("\033[4")
-	outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
-	outbuf.WriteString("m")
+	switch output_mode {
+	case Output256, Output216, OutputGrayscale:
+		outbuf.WriteString("\033[48;5;")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
+		outbuf.WriteString("m")
+	default:
+		outbuf.WriteString("\033[4")
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
+		outbuf.WriteString("m")
+	}
 }
 
 func write_sgr(fg, bg Attribute) {
 	switch output_mode {
 	case Output256, Output216, OutputGrayscale:
 		outbuf.WriteString("\033[38;5;")
-		outbuf.Write(strconv.AppendUint(intbuf, uint64(fg), 10))
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(fg-1), 10))
 		outbuf.WriteString("m")
 		outbuf.WriteString("\033[48;5;")
-		outbuf.Write(strconv.AppendUint(intbuf, uint64(bg), 10))
+		outbuf.Write(strconv.AppendUint(intbuf, uint64(bg-1), 10))
 		outbuf.WriteString("m")
 	default:
 		outbuf.WriteString("\033[3")
@@ -136,33 +150,35 @@ func send_attr(fg, bg Attribute) {
 
 	switch output_mode {
 	case Output256:
+		fgcol = fg & 0x1FF
+		bgcol = bg & 0x1FF
+	case Output216:
 		fgcol = fg & 0xFF
 		bgcol = bg & 0xFF
-		write_sgr(fgcol, bgcol)
-	case Output216:
-		fgcol = fg & 0xFF; if fgcol > 215 { fgcol = 7 }
-		bgcol = bg & 0xFF; if bgcol > 215 { bgcol = 0 }
-		fgcol += 0x10;
-		bgcol += 0x10;
-		write_sgr(fgcol, bgcol)
+		if fgcol > 216 { fgcol = ColorDefault }
+		if bgcol > 216 { bgcol = ColorDefault }
+		if fgcol != ColorDefault { fgcol += 0x10 }
+		if bgcol != ColorDefault { bgcol += 0x10 }
 	case OutputGrayscale:
-		fgcol = fg & 0xFF; if fgcol > 23 { fgcol = 23 }
-		bgcol = bg & 0xFF; if bgcol > 23 { bgcol = 0 }
-		fgcol += 0xe8;
-		bgcol += 0xe8;
-		write_sgr(fgcol, bgcol)
+		fgcol = fg & 0x1F
+		bgcol = bg & 0x1F
+		if fgcol > 24 { fgcol = ColorDefault }
+		if bgcol > 24 { bgcol = ColorDefault }
+		if fgcol != ColorDefault { fgcol += 0xe8 }
+		if bgcol != ColorDefault { bgcol += 0xe8 }
 	default:
 		fgcol = fg & 0x0F
 		bgcol = bg & 0x0F
-		if fgcol != ColorDefault {
-			if bgcol != ColorDefault {
-				write_sgr(fgcol, bgcol)
-			} else {
-				write_sgr_fg(fgcol)
-			}
-		} else if bgcol != ColorDefault {
-			write_sgr_bg(bgcol)
+	}
+
+	if fgcol != ColorDefault {
+		if bgcol != ColorDefault {
+			write_sgr(fgcol, bgcol)
+		} else {
+			write_sgr_fg(fgcol)
 		}
+	} else if bgcol != ColorDefault {
+		write_sgr_bg(bgcol)
 	}
 
 	if fg&AttrBold != 0 {

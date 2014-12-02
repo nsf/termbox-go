@@ -315,7 +315,7 @@ func SetInputMode(mode InputMode) InputMode {
 //    Example usage:
 //        SetCell(x, y, '@', ColorBlack | AttrBold, ColorRed);
 //
-// 2. Output256 => [0..256]
+// 2. Output256 => [1..256]
 //    In this mode you can leverage the 256 terminal mode:
 //    0x00 - 0x07: the 8 colors as in OutputNormal
 //    0x08 - 0x0f: Color* | AttrBold
@@ -326,13 +326,15 @@ func SetInputMode(mode InputMode) InputMode {
 //        SetCell(x, y, '@', 184, 240);
 //        SetCell(x, y, '@', 0xb8, 0xf0);
 //
-// 3. Output216 => [0..216]
+// 3. Output216 => [1..216]
 //    This mode supports the 3rd range of the 256 mode only.
 //    But you dont need to provide an offset.
 //
-// 4. OutputGrayscale => [0..23]
+// 4. OutputGrayscale => [1..24]
 //    This mode supports the 4th range of the 256 mode only.
 //    But you dont need to provide an offset.
+//
+// In all modes, 0 represents the default color.
 //
 // `go run _demos/output.go` to see its impact on your terminal.
 //

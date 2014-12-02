@@ -148,7 +148,7 @@ const (
 // terminals applying AttrBold to background may result in blinking text. Use
 // them with caution and test your code on various terminals.
 const (
-	AttrBold Attribute = 1 << (iota + 8)
+	AttrBold Attribute = 1 << (iota + 9)
 	AttrUnderline
 	AttrReverse
 )
