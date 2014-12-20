@@ -155,17 +155,33 @@ func send_attr(fg, bg Attribute) {
 	case Output216:
 		fgcol = fg & 0xFF
 		bgcol = bg & 0xFF
-		if fgcol > 216 { fgcol = ColorDefault }
-		if bgcol > 216 { bgcol = ColorDefault }
-		if fgcol != ColorDefault { fgcol += 0x10 }
-		if bgcol != ColorDefault { bgcol += 0x10 }
+		if fgcol > 216 {
+			fgcol = ColorDefault
+		}
+		if bgcol > 216 {
+			bgcol = ColorDefault
+		}
+		if fgcol != ColorDefault {
+			fgcol += 0x10
+		}
+		if bgcol != ColorDefault {
+			bgcol += 0x10
+		}
 	case OutputGrayscale:
 		fgcol = fg & 0x1F
 		bgcol = bg & 0x1F
-		if fgcol > 24 { fgcol = ColorDefault }
-		if bgcol > 24 { bgcol = ColorDefault }
-		if fgcol != ColorDefault { fgcol += 0xe8 }
-		if bgcol != ColorDefault { bgcol += 0xe8 }
+		if fgcol > 24 {
+			fgcol = ColorDefault
+		}
+		if bgcol > 24 {
+			bgcol = ColorDefault
+		}
+		if fgcol != ColorDefault {
+			fgcol += 0xe8
+		}
+		if bgcol != ColorDefault {
+			bgcol += 0xe8
+		}
 	default:
 		fgcol = fg & 0x0F
 		bgcol = bg & 0x0F

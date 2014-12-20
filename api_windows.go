@@ -82,7 +82,7 @@ func Close() {
 	// stop event producer
 	cancel_comm <- true
 	set_event(interrupt)
-	<-cancel_comm
+	<-cancel_done_comm
 
 	set_console_cursor_info(out, &orig_cursor_info)
 	set_console_cursor_position(out, coord{})

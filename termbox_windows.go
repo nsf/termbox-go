@@ -326,29 +326,30 @@ type input_event struct {
 
 var (
 	orig_cursor_info console_cursor_info
-	orig_size    coord
-	orig_mode    dword
-	orig_screen  syscall.Handle
-	back_buffer  cellbuf
-	front_buffer cellbuf
-	term_size    coord
-	input_mode   = InputEsc
-	cursor_x     = cursor_hidden
-	cursor_y     = cursor_hidden
-	foreground   = ColorDefault
-	background   = ColorDefault
-	in           syscall.Handle
-	out          syscall.Handle
-	interrupt    syscall.Handle
-	attrsbuf     []word
-	charsbuf     []wchar
-	diffbuf      []diff_msg
-	beg_x        = -1
-	beg_y        = -1
-	beg_i        = -1
-	input_comm   = make(chan Event)
-	cancel_comm  = make(chan bool)
-	alt_mode_esc = false
+	orig_size        coord
+	orig_mode        dword
+	orig_screen      syscall.Handle
+	back_buffer      cellbuf
+	front_buffer     cellbuf
+	term_size        coord
+	input_mode       = InputEsc
+	cursor_x         = cursor_hidden
+	cursor_y         = cursor_hidden
+	foreground       = ColorDefault
+	background       = ColorDefault
+	in               syscall.Handle
+	out              syscall.Handle
+	interrupt        syscall.Handle
+	attrsbuf         []word
+	charsbuf         []wchar
+	diffbuf          []diff_msg
+	beg_x            = -1
+	beg_y            = -1
+	beg_i            = -1
+	input_comm       = make(chan Event)
+	cancel_comm      = make(chan bool, 1)
+	cancel_done_comm = make(chan bool)
+	alt_mode_esc     = false
 
 	// these ones just to prevent heap allocs at all costs
 	tmp_info  console_screen_buffer_info
@@ -378,8 +379,8 @@ func get_win_size(out syscall.Handle) coord {
 		panic(err)
 	}
 	return coord{
-		x: tmp_info.window.right-tmp_info.window.left + 1,
-		y: tmp_info.window.bottom-tmp_info.window.top + 1,
+		x: tmp_info.window.right - tmp_info.window.left + 1,
+		y: tmp_info.window.bottom - tmp_info.window.top + 1,
 	}
 }
 
@@ -760,7 +761,7 @@ func input_event_producer() {
 
 		select {
 		case <-cancel_comm:
-			cancel_comm <- true
+			cancel_done_comm <- true
 			return
 		default:
 		}

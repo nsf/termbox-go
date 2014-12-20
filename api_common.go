@@ -4,12 +4,12 @@ package termbox
 // public API, common OS agnostic part
 
 type (
-	InputMode int
+	InputMode  int
 	OutputMode int
-	EventType uint8
-	Modifier  uint8
-	Key       uint16
-	Attribute uint16
+	EventType  uint8
+	Modifier   uint8
+	Key        uint16
+	Attribute  uint16
 )
 
 // This type represents a termbox event. The 'Mod', 'Key' and 'Ch' fields are
