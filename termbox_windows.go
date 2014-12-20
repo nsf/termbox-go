@@ -347,7 +347,7 @@ var (
 	beg_y        = -1
 	beg_i        = -1
 	input_comm   = make(chan Event)
-	cancel_comm  = make(chan bool, 1)
+	cancel_comm  = make(chan bool)
 	alt_mode_esc = false
 
 	// these ones just to prevent heap allocs at all costs
