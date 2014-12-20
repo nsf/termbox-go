@@ -18,11 +18,16 @@ import (
 func Init() error {
 	var err error
 
-	in, err = syscall.GetStdHandle(syscall.STD_INPUT_HANDLE)
+	interrupt, err = create_event()
 	if err != nil {
 		return err
 	}
-	out, err = syscall.GetStdHandle(syscall.STD_OUTPUT_HANDLE)
+
+	in, err = syscall.Open("CONIN$", syscall.O_RDWR, 0)
+	if err != nil {
+		return err
+	}
+	out, err = syscall.Open("CONOUT$", syscall.O_RDWR, 0)
 	if err != nil {
 		return err
 	}
@@ -33,39 +38,37 @@ func Init() error {
 	}
 
 	err = set_console_mode(in, enable_window_input)
-	consolewin = err == nil
-
-	orig_screen = out
-	out, err = create_console_screen_buffer()
-	if err != nil {
-		return err
-	}
-	w, h := get_win_size(out)
-
-	err = set_console_screen_buffer_size(out, coord{short(w), short(h)})
 	if err != nil {
 		return err
 	}
 
-	err = set_console_active_screen_buffer(out)
+	orig_size = get_term_size(out)
+	win_size := get_win_size(out)
+
+	err = set_console_screen_buffer_size(out, win_size)
+	if err != nil {
+		return err
+	}
+
+	err = get_console_cursor_info(out, &orig_cursor_info)
 	if err != nil {
 		return err
 	}
 
 	show_cursor(false)
-	termw, termh = get_term_size(out)
-	back_buffer.init(termw, termh)
-	front_buffer.init(termw, termh)
+	term_size = get_term_size(out)
+	back_buffer.init(int(term_size.x), int(term_size.y))
+	front_buffer.init(int(term_size.x), int(term_size.y))
 	back_buffer.clear()
 	front_buffer.clear()
 	clear()
 
-	attrsbuf = make([]word, 0, termw*termh)
-	charsbuf = make([]wchar, 0, termw*termh)
+	attrsbuf = make([]word, 0, int(term_size.x)*int(term_size.y))
+	charsbuf = make([]wchar, 0, int(term_size.x)*int(term_size.y))
 	diffbuf = make([]diff_msg, 0, 32)
 
 	go input_event_producer()
-
+	IsInit = true
 	return nil
 }
 
@@ -73,9 +76,22 @@ func Init() error {
 // when termbox's functionality isn't required anymore.
 func Close() {
 	// we ignore errors here, because we can't really do anything about them
+	Clear(0, 0)
+	Flush()
+
+	// stop event producer
+	cancel_comm <- true
+	set_event(interrupt)
+	<-cancel_comm
+
+	set_console_cursor_info(out, &orig_cursor_info)
+	set_console_cursor_position(out, coord{})
+	set_console_screen_buffer_size(out, orig_size)
 	set_console_mode(in, orig_mode)
-	set_console_active_screen_buffer(orig_screen)
+	syscall.Close(in)
 	syscall.Close(out)
+	syscall.Close(interrupt)
+	IsInit = false
 }
 
 // Synchronizes the internal back buffer with the terminal.
@@ -143,7 +159,7 @@ func PollEvent() Event {
 // of the console window, after the console size has changed, the internal back
 // buffer will get in sync only after Clear or Flush function calls.
 func Size() (int, int) {
-	return termw, termh
+	return int(term_size.x), int(term_size.y)
 }
 
 // Clears the internal back buffer.
@@ -171,17 +187,15 @@ func SetInputMode(mode InputMode) InputMode {
 	if mode == InputCurrent {
 		return input_mode
 	}
-	if consolewin {
-		if mode&InputMouse != 0 {
-			err := set_console_mode(in, enable_window_input|enable_mouse_input|enable_extended_flags)
-			if err != nil {
-				panic(err)
-			}
-		} else {
-			err := set_console_mode(in, enable_window_input)
-			if err != nil {
-				panic(err)
-			}
+	if mode&InputMouse != 0 {
+		err := set_console_mode(in, enable_window_input|enable_mouse_input|enable_extended_flags)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		err := set_console_mode(in, enable_window_input)
+		if err != nil {
+			panic(err)
 		}
 	}
 

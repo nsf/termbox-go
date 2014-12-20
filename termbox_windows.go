@@ -76,11 +76,15 @@ var (
 	proc_write_console_output_attribute   = kernel32.NewProc("WriteConsoleOutputAttribute")
 	proc_set_console_cursor_info          = kernel32.NewProc("SetConsoleCursorInfo")
 	proc_set_console_cursor_position      = kernel32.NewProc("SetConsoleCursorPosition")
+	proc_get_console_cursor_info          = kernel32.NewProc("GetConsoleCursorInfo")
 	proc_read_console_input               = kernel32.NewProc("ReadConsoleInputW")
 	proc_get_console_mode                 = kernel32.NewProc("GetConsoleMode")
 	proc_set_console_mode                 = kernel32.NewProc("SetConsoleMode")
 	proc_fill_console_output_character    = kernel32.NewProc("FillConsoleOutputCharacterW")
 	proc_fill_console_output_attribute    = kernel32.NewProc("FillConsoleOutputAttribute")
+	proc_create_event                     = kernel32.NewProc("CreateEventW")
+	proc_wait_for_multiple_objects        = kernel32.NewProc("WaitForMultipleObjects")
+	proc_set_event                        = kernel32.NewProc("SetEvent")
 )
 
 func set_console_active_screen_buffer(h syscall.Handle) (err error) {
@@ -176,6 +180,19 @@ func set_console_cursor_info(h syscall.Handle, info *console_cursor_info) (err e
 	return
 }
 
+func get_console_cursor_info(h syscall.Handle, info *console_cursor_info) (err error) {
+	r0, _, e1 := syscall.Syscall(proc_get_console_cursor_info.Addr(),
+		2, uintptr(h), uintptr(unsafe.Pointer(info)), 0)
+	if int(r0) == 0 {
+		if e1 != 0 {
+			err = error(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return
+}
+
 func set_console_cursor_position(h syscall.Handle, pos coord) (err error) {
 	r0, _, e1 := syscall.Syscall(proc_set_console_cursor_position.Addr(),
 		2, uintptr(h), pos.uintptr(), 0)
@@ -256,6 +273,46 @@ func fill_console_output_attribute(h syscall.Handle, attr word, n int) (err erro
 	return
 }
 
+func create_event() (out syscall.Handle, err error) {
+	r0, _, e1 := syscall.Syscall6(proc_create_event.Addr(),
+		4, 0, 0, 0, 0, 0, 0)
+	if int(r0) == 0 {
+		if e1 != 0 {
+			err = error(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return syscall.Handle(r0), nil
+}
+
+func wait_for_multiple_objects(objects []syscall.Handle) (err error) {
+	r0, _, e1 := syscall.Syscall6(proc_wait_for_multiple_objects.Addr(),
+		4, uintptr(len(objects)), uintptr(unsafe.Pointer(&objects[0])),
+		0, 0xFFFFFFFF, 0, 0)
+	if uint32(r0) == 0xFFFFFFFF {
+		if e1 != 0 {
+			err = error(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return
+}
+
+func set_event(ev syscall.Handle) (err error) {
+	r0, _, e1 := syscall.Syscall(proc_set_event.Addr(),
+		1, uintptr(ev), 0, 0)
+	if int(r0) == 0 {
+		if e1 != 0 {
+			err = error(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return
+}
+
 type diff_msg struct {
 	pos   coord
 	attrs []word
@@ -268,12 +325,13 @@ type input_event struct {
 }
 
 var (
+	orig_cursor_info console_cursor_info
+	orig_size    coord
 	orig_mode    dword
 	orig_screen  syscall.Handle
 	back_buffer  cellbuf
 	front_buffer cellbuf
-	termw        int
-	termh        int
+	term_size    coord
 	input_mode   = InputEsc
 	cursor_x     = cursor_hidden
 	cursor_y     = cursor_hidden
@@ -281,6 +339,7 @@ var (
 	background   = ColorDefault
 	in           syscall.Handle
 	out          syscall.Handle
+	interrupt    syscall.Handle
 	attrsbuf     []word
 	charsbuf     []wchar
 	diffbuf      []diff_msg
@@ -288,8 +347,8 @@ var (
 	beg_y        = -1
 	beg_i        = -1
 	input_comm   = make(chan Event)
+	cancel_comm  = make(chan bool, 1)
 	alt_mode_esc = false
-	consolewin   = false
 
 	// these ones just to prevent heap allocs at all costs
 	tmp_info  console_screen_buffer_info
@@ -297,38 +356,48 @@ var (
 	tmp_coord = coord{0, 0}
 )
 
-func get_term_size(out syscall.Handle) (int, int) {
+func get_cursor_position(out syscall.Handle) coord {
 	err := get_console_screen_buffer_info(out, &tmp_info)
 	if err != nil {
 		panic(err)
 	}
-	return int(tmp_info.size.x), int(tmp_info.size.y)
+	return tmp_info.cursor_position
 }
 
-func get_win_size(out syscall.Handle) (int, int) {
+func get_term_size(out syscall.Handle) coord {
 	err := get_console_screen_buffer_info(out, &tmp_info)
 	if err != nil {
 		panic(err)
 	}
-	return int(tmp_info.window.right-tmp_info.window.left) + 1,
-		int(tmp_info.window.bottom-tmp_info.window.top) + 1
+	return tmp_info.size
+}
+
+func get_win_size(out syscall.Handle) coord {
+	err := get_console_screen_buffer_info(out, &tmp_info)
+	if err != nil {
+		panic(err)
+	}
+	return coord{
+		x: tmp_info.window.right-tmp_info.window.left + 1,
+		y: tmp_info.window.bottom-tmp_info.window.top + 1,
+	}
 }
 
 func update_size_maybe() {
-	w, h := get_term_size(out)
-	if w != termw || h != termh {
-		termw, termh = w, h
-		back_buffer.resize(termw, termh)
-		front_buffer.resize(termw, termh)
+	size := get_term_size(out)
+	if size.x != term_size.x || size.y != term_size.y {
+		term_size = size
+		back_buffer.resize(int(size.x), int(size.y))
+		front_buffer.resize(int(size.x), int(size.y))
 		front_buffer.clear()
 		clear()
 
-		size := termw * termh
-		if cap(attrsbuf) < size {
-			attrsbuf = make([]word, 0, size)
+		area := int(size.x) * int(size.y)
+		if cap(attrsbuf) < area {
+			attrsbuf = make([]word, 0, area)
 		}
-		if cap(charsbuf) < size {
-			charsbuf = make([]wchar, 0, size)
+		if cap(charsbuf) < area {
+			charsbuf = make([]wchar, 0, area)
 		}
 	}
 }
@@ -512,11 +581,12 @@ func clear() {
 		background,
 	})
 
-	err = fill_console_output_attribute(out, attr, termw*termh)
+	area := int(term_size.x) * int(term_size.y)
+	err = fill_console_output_attribute(out, attr, area)
 	if err != nil {
 		panic(err)
 	}
-	err = fill_console_output_character(out, char[0], termw*termh)
+	err = fill_console_output_character(out, char[0], area)
 	if err != nil {
 		panic(err)
 	}
@@ -681,7 +751,20 @@ func input_event_producer() {
 	var err error
 	var last_button Key
 	var last_state = dword(0)
+	handles := []syscall.Handle{in, interrupt}
 	for {
+		err = wait_for_multiple_objects(handles)
+		if err != nil {
+			input_comm <- Event{Type: EventError, Err: err}
+		}
+
+		select {
+		case <-cancel_comm:
+			cancel_comm <- true
+			return
+		default:
+		}
+
 		err = read_console_input(in, &r)
 		if err != nil {
 			input_comm <- Event{Type: EventError, Err: err}
