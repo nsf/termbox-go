@@ -108,13 +108,13 @@ func setup_term_builtin() error {
 		funcs   []string
 	}{
 		{"xterm", xterm_keys, xterm_funcs},
-		{"st-256color", xterm_keys, xterm_funcs},
 		{"rxvt", rxvt_unicode_keys, rxvt_unicode_funcs},
 		{"linux", linux_keys, linux_funcs},
 		{"Eterm", eterm_keys, eterm_funcs},
 		{"screen", screen_keys, screen_funcs},
 		// let's assume that 'cygwin' is xterm compatible
 		{"cygwin", xterm_keys, xterm_funcs},
+		{"st", xterm_keys, xterm_funcs},
 	}
 
 	// try compatibility variants
