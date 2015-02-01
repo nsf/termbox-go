@@ -176,4 +176,5 @@ const (
 	EventResize
 	EventMouse
 	EventError
+	EventInterrupt
 )

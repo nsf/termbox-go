@@ -47,30 +47,31 @@ var (
 	funcs []string
 
 	// termbox inner state
-	orig_tios    syscall_Termios
-	back_buffer  cellbuf
-	front_buffer cellbuf
-	termw        int
-	termh        int
-	input_mode   = InputEsc
-	output_mode  = OutputNormal
-	out          *os.File
-	in           int
-	lastfg       = attr_invalid
-	lastbg       = attr_invalid
-	lastx        = coord_invalid
-	lasty        = coord_invalid
-	cursor_x     = cursor_hidden
-	cursor_y     = cursor_hidden
-	foreground   = ColorDefault
-	background   = ColorDefault
-	inbuf        = make([]byte, 0, 64)
-	outbuf       bytes.Buffer
-	sigwinch     = make(chan os.Signal, 1)
-	sigio        = make(chan os.Signal, 1)
-	quit         = make(chan int)
-	input_comm   = make(chan input_event)
-	intbuf       = make([]byte, 0, 16)
+	orig_tios      syscall_Termios
+	back_buffer    cellbuf
+	front_buffer   cellbuf
+	termw          int
+	termh          int
+	input_mode     = InputEsc
+	output_mode    = OutputNormal
+	out            *os.File
+	in             int
+	lastfg         = attr_invalid
+	lastbg         = attr_invalid
+	lastx          = coord_invalid
+	lasty          = coord_invalid
+	cursor_x       = cursor_hidden
+	cursor_y       = cursor_hidden
+	foreground     = ColorDefault
+	background     = ColorDefault
+	inbuf          = make([]byte, 0, 64)
+	outbuf         bytes.Buffer
+	sigwinch       = make(chan os.Signal, 1)
+	sigio          = make(chan os.Signal, 1)
+	quit           = make(chan int)
+	input_comm     = make(chan input_event)
+	interrupt_comm = make(chan struct{})
+	intbuf         = make([]byte, 0, 16)
 )
 
 func write_cursor(x, y int) {

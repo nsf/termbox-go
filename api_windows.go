@@ -94,6 +94,13 @@ func Close() {
 	IsInit = false
 }
 
+// Interrupt an in-progress call to PollEvent by causing it to return
+// EventInterrupt.  Note that this function will block until the PollEvent
+// function has successfully been interrupted.
+func Interrupt() {
+	interrupt_comm <- struct{}{}
+}
+
 // Synchronizes the internal back buffer with the terminal.
 func Flush() error {
 	update_size_maybe()
@@ -151,7 +158,12 @@ func CellBuffer() []Cell {
 
 // Wait for an event and return it. This is a blocking function call.
 func PollEvent() Event {
-	return <-input_comm
+	select {
+	case ev := <-input_comm:
+		return ev
+	case <-interrupt_comm:
+		return Event{Type: EventInterrupt}
+	}
 }
 
 // Returns the size of the internal back buffer (which is mostly the same as

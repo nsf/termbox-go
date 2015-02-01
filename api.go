@@ -109,6 +109,13 @@ func Init() error {
 	return nil
 }
 
+// Interrupt an in-progress call to PollEvent by causing it to return
+// EventInterrupt.  Note that this function will block until the PollEvent
+// function has successfully been interrupted.
+func Interrupt() {
+	interrupt_comm <- struct{}{}
+}
+
 // Finalizes termbox library, should be called after successful initialization
 // when termbox's functionality isn't required anymore.
 func Close() {
@@ -253,6 +260,10 @@ func PollEvent() Event {
 			if extract_event(&event) {
 				return event
 			}
+		case <-interrupt_comm:
+			event.Type = EventInterrupt
+			return event
+
 		case <-sigwinch:
 			event.Type = EventResize
 			event.Width, event.Height = get_term_size(out.Fd())
