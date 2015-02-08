@@ -10,6 +10,10 @@ type (
 	short int16
 	dword uint32
 	word  uint16
+	char_info struct {
+		char wchar
+		attr word
+	}
 	coord struct {
 		x short
 		y short
@@ -72,6 +76,7 @@ var (
 	proc_set_console_screen_buffer_size   = kernel32.NewProc("SetConsoleScreenBufferSize")
 	proc_create_console_screen_buffer     = kernel32.NewProc("CreateConsoleScreenBuffer")
 	proc_get_console_screen_buffer_info   = kernel32.NewProc("GetConsoleScreenBufferInfo")
+	proc_write_console_output             = kernel32.NewProc("WriteConsoleOutputW")
 	proc_write_console_output_character   = kernel32.NewProc("WriteConsoleOutputCharacterW")
 	proc_write_console_output_attribute   = kernel32.NewProc("WriteConsoleOutputAttribute")
 	proc_set_console_cursor_info          = kernel32.NewProc("SetConsoleCursorInfo")
@@ -129,6 +134,22 @@ func create_console_screen_buffer() (h syscall.Handle, err error) {
 func get_console_screen_buffer_info(h syscall.Handle, info *console_screen_buffer_info) (err error) {
 	r0, _, e1 := syscall.Syscall(proc_get_console_screen_buffer_info.Addr(),
 		2, uintptr(h), uintptr(unsafe.Pointer(info)), 0)
+	if int(r0) == 0 {
+		if e1 != 0 {
+			err = error(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return
+}
+
+func write_console_output(h syscall.Handle, chars []char_info, dst small_rect) (err error) {
+	tmp_coord = coord{dst.right - dst.left + 1, dst.bottom - dst.top + 1}
+	tmp_rect = dst
+	r0, _, e1 := syscall.Syscall6(proc_write_console_output.Addr(),
+		5, uintptr(h), uintptr(unsafe.Pointer(&chars[0])), tmp_coord.uintptr(),
+		tmp_coord0.uintptr(), uintptr(unsafe.Pointer(&tmp_rect)), 0)
 	if int(r0) == 0 {
 		if e1 != 0 {
 			err = error(e1)
@@ -314,9 +335,9 @@ func set_event(ev syscall.Handle) (err error) {
 }
 
 type diff_msg struct {
-	pos   coord
-	attrs []word
-	chars []wchar
+	pos   short
+	lines short
+	chars []char_info
 }
 
 type input_event struct {
@@ -340,8 +361,7 @@ var (
 	in               syscall.Handle
 	out              syscall.Handle
 	interrupt        syscall.Handle
-	attrsbuf         []word
-	charsbuf         []wchar
+	charbuf          []char_info
 	diffbuf          []diff_msg
 	beg_x            = -1
 	beg_y            = -1
@@ -355,7 +375,9 @@ var (
 	// these ones just to prevent heap allocs at all costs
 	tmp_info  console_screen_buffer_info
 	tmp_arg   dword
+	tmp_coord0 = coord{0, 0}
 	tmp_coord = coord{0, 0}
+	tmp_rect = small_rect{0, 0, 0, 0}
 )
 
 func get_cursor_position(out syscall.Handle) coord {
@@ -395,11 +417,8 @@ func update_size_maybe() {
 		clear()
 
 		area := int(size.x) * int(size.y)
-		if cap(attrsbuf) < area {
-			attrsbuf = make([]word, 0, area)
-		}
-		if cap(charsbuf) < area {
-			charsbuf = make([]wchar, 0, area)
+		if cap(charbuf) < area {
+			charbuf = make([]char_info, 0, area)
 		}
 	}
 }
@@ -437,96 +456,70 @@ const (
 	surr_self        = 0x10000
 )
 
+func append_diff_line(y int) int {
+	n := 0
+	for x := 0; x < front_buffer.width; {
+		cell_offset := y * front_buffer.width + x
+		back := &back_buffer.cells[cell_offset]
+		front := &front_buffer.cells[cell_offset]
+		attr, char := cell_to_char_info(*back)
+		w := runewidth.RuneWidth(back.Ch)
+		if w == 0 {
+			w = 1
+		}
+		if w == 2 {
+			// not enough space for a 2-cells rune,
+			// let's just put a space in there
+			front.Ch = ' '
+			char[0] = ' '
+			w = 1
+		}
+		charbuf = append(charbuf, char_info{attr: attr, char: char[0]})
+		n++
+		*front = *back
+		x += w
+	}
+	return n
+}
+
 // compares 'back_buffer' with 'front_buffer' and prepares all changes in the form of
 // 'diff_msg's in the 'diff_buf'
 func prepare_diff_messages() {
 	// clear buffers
-	attrsbuf = attrsbuf[:0]
-	charsbuf = charsbuf[:0]
 	diffbuf = diffbuf[:0]
-	beg_x = -1
 
-	attr_beg_i := 0
-
+	var diff diff_msg
+	gbeg := 0
 	for y := 0; y < front_buffer.height; y++ {
+		same := true
 		line_offset := y * front_buffer.width
-		for x := 0; x < front_buffer.width; {
+		for x := 0; x < front_buffer.width; x++ {
 			cell_offset := line_offset + x
 			back := &back_buffer.cells[cell_offset]
 			front := &front_buffer.cells[cell_offset]
-			w := runewidth.RuneWidth(back.Ch)
-			if w == 0 {
-				w = 1
+			if *back != *front {
+				same = false
+				break
 			}
-			if *back == *front {
-				if beg_x != -1 {
-					// there is a sequence in progress,
-					// commit it
-					diffbuf = append(diffbuf, diff_msg{
-						coord{short(beg_x), short(beg_y)},
-						attrsbuf[attr_beg_i:],
-						charsbuf[beg_i:],
-					})
-					beg_x = -1
-				}
-				x += w
-				continue
+		}
+		if same && diff.lines > 0 {
+			diffbuf = append(diffbuf, diff)
+			diff = diff_msg{}
+		}
+		if !same {
+			beg := len(charbuf)
+			end := beg + append_diff_line(y)
+			if diff.lines == 0 {
+				diff.pos = short(y)
+				gbeg = beg
 			}
-
-			*front = *back
-
-			// have diff
-			if beg_x == -1 {
-				// no started sequence, start one
-				beg_x, beg_y = x, y
-				beg_i = len(charsbuf)
-				attr_beg_i = len(attrsbuf)
-			}
-			attr, char := cell_to_char_info(*back)
-			if w == 2 && x == front_buffer.width-1 {
-				// not enough space for a 2-cells rune,
-				// let's just put a space in there
-				front.Ch = ' '
-				char[0] = ' '
-				w = 1
-			}
-
-			attrsbuf = append(attrsbuf, attr)
-			charsbuf = append(charsbuf, char[0])
-			if w == 2 {
-				// we assume here that only 2-cell
-				// runes can use more than one utf16
-				// characters, it's not true, but in
-				// most cases it is
-				attrsbuf = append(attrsbuf, attr)
-				if char[1] != ' ' {
-					charsbuf = append(charsbuf, char[1])
-				}
-
-				// for wide runes we also trash the next cell,
-				// so that it gets updated correctly later, we
-				// never get there if the wide rune happened to
-				// be in the last cell of the line, no need to
-				// check for bounds
-				next := cell_offset + 1
-				front_buffer.cells[next] = Cell{
-					Ch: 0,
-					Fg: back.Fg,
-					Bg: back.Bg,
-				}
-			}
-			x += w
+			diff.lines++
+			diff.chars = charbuf[gbeg:end]
 		}
 	}
-
-	if beg_x != -1 {
-		// there is a sequence in progress,
-		// commit it
-		diffbuf = append(diffbuf, diff_msg{
-			coord{short(beg_x), short(beg_y)},
-			attrsbuf[attr_beg_i:],
-			charsbuf[beg_i:],
-		})
+	if diff.lines > 0 {
+		diffbuf = append(diffbuf, diff)
+		diff = diff_msg{}
 	}
 }
 

@@ -63,8 +63,6 @@ func Init() error {
 	front_buffer.clear()
 	clear()
 
-	attrsbuf = make([]word, 0, int(term_size.x)*int(term_size.y))
-	charsbuf = make([]wchar, 0, int(term_size.x)*int(term_size.y))
 	diffbuf = make([]diff_msg, 0, 32)
 
 	go input_event_producer()
@@ -105,9 +103,14 @@ func Interrupt() {
 func Flush() error {
 	update_size_maybe()
 	prepare_diff_messages()
-	for _, msg := range diffbuf {
-		write_console_output_attribute(out, msg.attrs, msg.pos)
-		write_console_output_character(out, msg.chars, msg.pos)
+	for _, diff := range diffbuf {
+		r := small_rect{
+			left: 0,
+			top: diff.pos,
+			right: term_size.x - 1,
+			bottom: diff.pos + diff.lines - 1,
+		}
+		write_console_output(out, diff.chars, r)
 	}
 	if !is_cursor_hidden(cursor_x, cursor_y) {
 		move_cursor(cursor_x, cursor_y)
