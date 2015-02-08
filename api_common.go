@@ -25,6 +25,7 @@ type Event struct {
 	Err    error     // error in case if input failed
 	MouseX int       // x coord of mouse
 	MouseY int       // y coord of mouse
+	Raw    []byte    // raw data
 }
 
 // A cell, single conceptual entity on the screen. The screen is basically a 2d
@@ -158,6 +159,7 @@ const (
 	InputEsc InputMode = 1 << iota
 	InputAlt
 	InputMouse
+	InputRaw
 	InputCurrent InputMode = 0
 )
 

@@ -321,6 +321,13 @@ func extract_event(event *Event) bool {
 		return false
 	}
 
+	// in raw mode don't parse raw inbuf
+	if input_mode&InputRaw != 0 {
+		event.Raw = inbuf
+		inbuf = []byte{}
+		return true
+	}
+
 	if inbuf[0] == '\033' {
 		// possible escape sequence
 		n, ok := parse_escape_sequence(event, inbuf)
