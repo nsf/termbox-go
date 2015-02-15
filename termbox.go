@@ -316,6 +316,25 @@ func parse_escape_sequence(event *Event, buf []byte) (int, bool) {
 	return 0, true
 }
 
+func extract_raw_event(data []byte, event *Event) bool {
+	if len(inbuf) == 0 {
+		return false
+	}
+
+	n := len(data)
+	if n == 0 {
+		return false
+	}
+
+	n = copy(data, inbuf)
+	copy(inbuf, inbuf[n:])
+	inbuf = inbuf[:len(inbuf)-n]
+
+	event.N = n
+	event.Type = EventRaw
+	return true
+}
+
 func extract_event(event *Event) bool {
 	if len(inbuf) == 0 {
 		return false

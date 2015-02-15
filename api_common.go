@@ -25,6 +25,7 @@ type Event struct {
 	Err    error     // error in case if input failed
 	MouseX int       // x coord of mouse
 	MouseY int       // y coord of mouse
+	N      int       // number of bytes written when getting a raw event
 }
 
 // A cell, single conceptual entity on the screen. The screen is basically a 2d
@@ -177,4 +178,6 @@ const (
 	EventMouse
 	EventError
 	EventInterrupt
+	EventRaw
+	EventNone
 )

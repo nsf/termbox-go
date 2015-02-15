@@ -238,6 +238,45 @@ func CellBuffer() []Cell {
 	return back_buffer.cells
 }
 
+// Wait for an event and return it. This is a blocking function call. Instead
+// of EventKey and EventMouse it returns EventRaw events. Raw event is written
+// into `data` slice and Event's N field is set to the amount of bytes written.
+// The minimum required length of the 'data' slice is 1. This requirement may
+// vary on different platforms.
+func PollRawEvent(data []byte) Event {
+	if len(data) == 0 {
+		panic("len(data) >= 1 is a requirement")
+	}
+
+	var event Event
+	if extract_raw_event(data, &event) {
+		return event
+	}
+
+	for {
+		select {
+		case ev := <-input_comm:
+			if ev.err != nil {
+				return Event{Type: EventError, Err: ev.err}
+			}
+
+			inbuf = append(inbuf, ev.data...)
+			input_comm <- ev
+			if extract_raw_event(data, &event) {
+				return event
+			}
+		case <-interrupt_comm:
+			event.Type = EventInterrupt
+			return event
+
+		case <-sigwinch:
+			event.Type = EventResize
+			event.Width, event.Height = get_term_size(out.Fd())
+			return event
+		}
+	}
+}
+
 // Wait for an event and return it. This is a blocking function call.
 func PollEvent() Event {
 	var event Event
