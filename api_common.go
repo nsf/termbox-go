@@ -181,3 +181,18 @@ const (
 	EventRaw
 	EventNone
 )
+
+func (im InputMode) String() string {
+	// im := Setim(InputCurrent)
+	imStr := ""
+	switch {
+	case im&InputEsc != 0:
+		imStr = "InputEsc"
+	case im&InputAlt != 0:
+		imStr = "InputAlt"
+	}
+	if im&InputMouse != 0 {
+		imStr += " | InputMouse"
+	}
+	return imStr
+}
