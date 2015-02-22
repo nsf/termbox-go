@@ -335,8 +335,9 @@ func extract_raw_event(data []byte, event *Event) bool {
 	return true
 }
 
-func extract_event(event *Event) bool {
+func extract_event(inbuf []byte, event *Event) bool {
 	if len(inbuf) == 0 {
+		event.N = 0
 		return false
 	}
 
@@ -344,8 +345,7 @@ func extract_event(event *Event) bool {
 		// possible escape sequence
 		n, ok := parse_escape_sequence(event, inbuf)
 		if n != 0 {
-			copy(inbuf, inbuf[n:])
-			inbuf = inbuf[:len(inbuf)-n]
+			event.N = n
 			return ok
 		}
 
@@ -356,15 +356,18 @@ func extract_event(event *Event) bool {
 			event.Ch = 0
 			event.Key = KeyEsc
 			event.Mod = 0
-			copy(inbuf, inbuf[1:])
-			inbuf = inbuf[:len(inbuf)-1]
+			event.N = 1
 			return true
 		case input_mode&InputAlt != 0:
 			// if we're in alt mode, set Alt modifier to event and redo parsing
 			event.Mod = ModAlt
-			copy(inbuf, inbuf[1:])
-			inbuf = inbuf[:len(inbuf)-1]
-			return extract_event(event)
+			ok := extract_event(inbuf[1:], event)
+			if ok {
+				event.N++
+			} else {
+				event.N = 0
+			}
+			return ok
 		default:
 			panic("unreachable")
 		}
@@ -378,8 +381,7 @@ func extract_event(event *Event) bool {
 		// fill event, pop buffer, return success
 		event.Ch = 0
 		event.Key = Key(inbuf[0])
-		copy(inbuf, inbuf[1:])
-		inbuf = inbuf[:len(inbuf)-1]
+		event.N = 1
 		return true
 	}
 
@@ -387,8 +389,7 @@ func extract_event(event *Event) bool {
 	if r, n := utf8.DecodeRune(inbuf); r != utf8.RuneError {
 		event.Ch = r
 		event.Key = 0
-		copy(inbuf, inbuf[n:])
-		inbuf = inbuf[:len(inbuf)-n]
+		event.N = n
 		return true
 	}
 

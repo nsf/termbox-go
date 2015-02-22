@@ -238,11 +238,33 @@ func CellBuffer() []Cell {
 	return back_buffer.cells
 }
 
+// After getting a raw event from PollRawEvent function call, you can parse it
+// again into an ordinary one using termbox logic. That is parse an event as
+// termbox would do it. Returned event in addition to usual Event struct fields
+// sets N field to the amount of bytes used within 'data' slice. If the length
+// of 'data' slice is zero or event cannot be parsed for some other reason, the
+// function will return a special event type: EventNone.
+//
+// IMPORTANT: EventNone may contain a non-zero N, which means you should skip
+// these bytes, because termbox cannot recognize them.
+//
+// NOTE: This API is experimental and may change in future.
+func ParseEvent(data []byte) Event {
+	event := Event{Type: EventKey}
+	ok := extract_event(data, &event)
+	if !ok {
+		return Event{Type: EventNone, N: event.N}
+	}
+	return event
+}
+
 // Wait for an event and return it. This is a blocking function call. Instead
 // of EventKey and EventMouse it returns EventRaw events. Raw event is written
 // into `data` slice and Event's N field is set to the amount of bytes written.
 // The minimum required length of the 'data' slice is 1. This requirement may
 // vary on different platforms.
+//
+// NOTE: This API is experimental and may change in future.
 func PollRawEvent(data []byte) Event {
 	if len(data) == 0 {
 		panic("len(data) >= 1 is a requirement")
@@ -283,7 +305,12 @@ func PollEvent() Event {
 
 	// try to extract event from input buffer, return on success
 	event.Type = EventKey
-	if extract_event(&event) {
+	ok := extract_event(inbuf, &event)
+	if event.N != 0 {
+		copy(inbuf, inbuf[event.N:])
+		inbuf = inbuf[:len(inbuf)-event.N]
+	}
+	if ok {
 		return event
 	}
 
@@ -296,7 +323,12 @@ func PollEvent() Event {
 
 			inbuf = append(inbuf, ev.data...)
 			input_comm <- ev
-			if extract_event(&event) {
+			ok := extract_event(inbuf, &event)
+			if event.N != 0 {
+				copy(inbuf, inbuf[event.N:])
+				inbuf = inbuf[:len(inbuf)-event.N]
+			}
+			if ok {
 				return event
 			}
 		case <-interrupt_comm:
