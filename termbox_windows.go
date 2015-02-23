@@ -6,10 +6,10 @@ import "unicode/utf16"
 import "github.com/mattn/go-runewidth"
 
 type (
-	wchar uint16
-	short int16
-	dword uint32
-	word  uint16
+	wchar     uint16
+	short     int16
+	dword     uint32
+	word      uint16
 	char_info struct {
 		char wchar
 		attr word
@@ -373,11 +373,11 @@ var (
 	alt_mode_esc     = false
 
 	// these ones just to prevent heap allocs at all costs
-	tmp_info  console_screen_buffer_info
-	tmp_arg   dword
+	tmp_info   console_screen_buffer_info
+	tmp_arg    dword
 	tmp_coord0 = coord{0, 0}
-	tmp_coord = coord{0, 0}
-	tmp_rect = small_rect{0, 0, 0, 0}
+	tmp_coord  = coord{0, 0}
+	tmp_rect   = small_rect{0, 0, 0, 0}
 )
 
 func get_cursor_position(out syscall.Handle) coord {
@@ -459,7 +459,7 @@ const (
 func append_diff_line(y int) int {
 	n := 0
 	for x := 0; x < front_buffer.width; {
-		cell_offset := y * front_buffer.width + x
+		cell_offset := y*front_buffer.width + x
 		back := &back_buffer.cells[cell_offset]
 		front := &front_buffer.cells[cell_offset]
 		attr, char := cell_to_char_info(*back)
@@ -471,7 +471,7 @@ func append_diff_line(y int) int {
 			// not enough space for a 2-cells rune,
 			// let's just put a space in there
 			front.Ch = ' '
-			char[0] = ' '
+			//char[0] = ' '
 			w = 1
 		}
 		charbuf = append(charbuf, char_info{attr: attr, char: char[0]})
