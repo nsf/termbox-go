@@ -20,6 +20,8 @@ const (
 	enable_window_input      = 0x8
 	enable_mouse_input       = 0x10
 	enable_extended_flags    = 0x80
+	leading_byte             = 0x0100
+	trailing_byte            = 0x0200
 
 	vk_f1          = 0x70
 	vk_f2          = 0x71
