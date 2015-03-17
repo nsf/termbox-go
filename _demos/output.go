@@ -1,5 +1,6 @@
 package main
 
+import "github.com/mattn/go-runewidth"
 import "github.com/nsf/termbox-go"
 
 const chars = "nnnnnnnnnbbbbbbbbbuuuuuuuuuBBBBBBBBB"
@@ -55,7 +56,12 @@ func print_wide(x, y int, s string) {
 			c = termbox.ColorRed
 		}
 		termbox.SetCell(x, y, r, termbox.ColorDefault, c)
-		x += 2
+		w := runewidth.RuneWidth(r)
+		if w == 0 || (w == 2 && runewidth.IsAmbiguousWidth(r)) {
+			w = 1
+		}
+		x += w
+
 		red = !red
 	}
 }
