@@ -105,9 +105,9 @@ func Flush() error {
 	prepare_diff_messages()
 	for _, diff := range diffbuf {
 		r := small_rect{
-			left: 0,
-			top: diff.pos,
-			right: term_size.x - 1,
+			left:   0,
+			top:    diff.pos,
+			right:  term_size.x - 1,
 			bottom: diff.pos + diff.lines - 1,
 		}
 		write_console_output(out, diff.chars, r)
