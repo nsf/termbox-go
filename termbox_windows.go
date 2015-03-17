@@ -70,6 +70,7 @@ func (this coord) uintptr() uintptr {
 }
 
 var kernel32 = syscall.NewLazyDLL("kernel32.dll")
+var is_cjk = runewidth.IsEastAsian()
 
 var (
 	proc_set_console_active_screen_buffer = kernel32.NewProc("SetConsoleActiveScreenBuffer")
@@ -463,17 +464,18 @@ func append_diff_line(y int) int {
 		back := &back_buffer.cells[cell_offset]
 		front := &front_buffer.cells[cell_offset]
 		attr, char := cell_to_char_info(*back)
+		charbuf = append(charbuf, char_info{attr: attr, char: char[0]})
+		*front = *back
+		n++
 		w := runewidth.RuneWidth(back.Ch)
-		if w == 0 {
-			w = 1
-		}
 		if w == 0 || w == 2 && runewidth.IsAmbiguousWidth(back.Ch) {
 			w = 1
 		}
-		charbuf = append(charbuf, char_info{attr: attr, char: char[0]})
-		n++
-		*front = *back
 		x += w
+		// If not CJK, fill trailing space with whitespace
+		if !is_cjk && w == 2 {
+			charbuf = append(charbuf, char_info{attr: attr, char: ' '})
+		}
 	}
 	return n
 }
