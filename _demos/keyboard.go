@@ -496,13 +496,13 @@ func draw_keyboard() {
 	inputmode := termbox.SetInputMode(termbox.InputCurrent)
 	inputmode_str := ""
 	switch {
-	case inputmode & termbox.InputEsc != 0:
+	case inputmode&termbox.InputEsc != 0:
 		inputmode_str = "termbox.InputEsc"
-	case inputmode & termbox.InputAlt != 0:
+	case inputmode&termbox.InputAlt != 0:
 		inputmode_str = "termbox.InputAlt"
 	}
 
-	if inputmode & termbox.InputMouse != 0 {
+	if inputmode&termbox.InputMouse != 0 {
 		inputmode_str += " | termbox.InputMouse"
 	}
 	printf_tb(3, 18, termbox.ColorWhite, termbox.ColorBlack, "Input mode: %s", inputmode_str)

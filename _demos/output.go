@@ -3,6 +3,7 @@ package main
 import "github.com/nsf/termbox-go"
 
 const chars = "nnnnnnnnnbbbbbbbbbuuuuuuuuuBBBBBBBBB"
+
 var output_mode = termbox.OutputNormal
 
 func next_char(current int) int {
@@ -78,15 +79,15 @@ func draw_all() {
 
 	case termbox.OutputGrayscale:
 		for y := 0; y < 24; y++ {
-			for x:= 0; x < 24; x++ {
+			for x := 0; x < 24; x++ {
 				termbox.SetCell(x, y, 'n',
 					termbox.Attribute(x+1),
 					termbox.Attribute(y+1))
 				termbox.SetCell(x+25, y, 'b',
-					termbox.Attribute(x+1) | termbox.AttrBold,
-					termbox.Attribute(24 - y))
+					termbox.Attribute(x+1)|termbox.AttrBold,
+					termbox.Attribute(24-y))
 				termbox.SetCell(x+50, y, 'u',
-					termbox.Attribute(x+1) | termbox.AttrUnderline,
+					termbox.Attribute(x+1)|termbox.AttrUnderline,
 					termbox.Attribute(y+1))
 			}
 			termbox.SetCell(76, y, 'd',
@@ -94,7 +95,7 @@ func draw_all() {
 				termbox.ColorDefault)
 			termbox.SetCell(77, y, 'd',
 				termbox.ColorDefault,
-				termbox.Attribute(24 - y))
+				termbox.Attribute(24-y))
 		}
 
 	case termbox.Output216:
@@ -102,7 +103,7 @@ func draw_all() {
 			for g := 0; g < 6; g++ {
 				for b := 0; b < 6; b++ {
 					y := r
-					x := g + 6 * b
+					x := g + 6*b
 					c1 := termbox.Attribute(1 + r*36 + g*6 + b)
 					bg := termbox.Attribute(1 + g*36 + b*6 + r)
 					c2 := termbox.Attribute(1 + b*36 + r*6 + g)
@@ -111,13 +112,13 @@ func draw_all() {
 					bc2 := c2 | termbox.AttrBold
 					uc2 := c2 | termbox.AttrUnderline
 					termbox.SetCell(x, y, 'n', c1, bg)
-					termbox.SetCell(x, y + 6, 'b', bc1, bg)
-					termbox.SetCell(x, y + 12, 'u', uc1, bg)
-					termbox.SetCell(x, y + 18, 'B', bc1 | uc1, bg)
-					termbox.SetCell(x + 37, y, 'n', c2, bg)
-					termbox.SetCell(x + 37, y + 6, 'b', bc2, bg)
-					termbox.SetCell(x + 37, y + 12, 'u', uc2, bg)
-					termbox.SetCell(x + 37, y + 18, 'B', bc2 | uc2, bg)
+					termbox.SetCell(x, y+6, 'b', bc1, bg)
+					termbox.SetCell(x, y+12, 'u', uc1, bg)
+					termbox.SetCell(x, y+18, 'B', bc1|uc1, bg)
+					termbox.SetCell(x+37, y, 'n', c2, bg)
+					termbox.SetCell(x+37, y+6, 'b', bc2, bg)
+					termbox.SetCell(x+37, y+12, 'u', uc2, bg)
+					termbox.SetCell(x+37, y+18, 'B', bc2|uc2, bg)
 				}
 				c1 := termbox.Attribute(1 + g*6 + r*36)
 				c2 := termbox.Attribute(6 + g*6 + r*36)
@@ -140,11 +141,11 @@ func draw_all() {
 					bold := c2 | termbox.AttrBold
 					under := c3 | termbox.AttrUnderline
 					both := c1 | termbox.AttrBold | termbox.AttrUnderline
-					termbox.SetCell(z + 8*x, y, ' ', 0, bg)
-					termbox.SetCell(z + 8*x, y+5, 'n', c4, bg)
-					termbox.SetCell(z + 8*x, y+10, 'b', bold, bg)
-					termbox.SetCell(z + 8*x, y+15, 'u', under, bg)
-					termbox.SetCell(z + 8*x, y+20, 'B', both, bg)
+					termbox.SetCell(z+8*x, y, ' ', 0, bg)
+					termbox.SetCell(z+8*x, y+5, 'n', c4, bg)
+					termbox.SetCell(z+8*x, y+10, 'b', bold, bg)
+					termbox.SetCell(z+8*x, y+15, 'u', under, bg)
+					termbox.SetCell(z+8*x, y+20, 'B', both, bg)
 				}
 			}
 		}
@@ -171,7 +172,7 @@ func draw_all() {
 	termbox.Flush()
 }
 
-var available_modes = []termbox.OutputMode {
+var available_modes = []termbox.OutputMode{
 	termbox.OutputNormal,
 	termbox.OutputGrayscale,
 	termbox.Output216,

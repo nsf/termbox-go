@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/nsf/termbox-go"
 	"fmt"
+	"github.com/nsf/termbox-go"
 )
 
 func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
@@ -58,13 +58,13 @@ func main() {
 	data := make([]byte, 0, 64)
 mainloop:
 	for {
-		if cap(data) - len(data) < 32 {
+		if cap(data)-len(data) < 32 {
 			newdata := make([]byte, len(data), len(data)+32)
 			copy(newdata, data)
 			data = newdata
 		}
 		beg := len(data)
-		d := data[beg:beg+32]
+		d := data[beg : beg+32]
 		switch ev := termbox.PollRawEvent(d); ev.Type {
 		case termbox.EventRaw:
 			data = data[:beg+ev.N]
