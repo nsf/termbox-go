@@ -458,22 +458,18 @@ const (
 
 func append_diff_line(y int) int {
 	n := 0
-	for x := 0; x < front_buffer.width; {
+	for x := 0; x < front_buffer.width; x++ {
 		cell_offset := y*front_buffer.width + x
 		back := &back_buffer.cells[cell_offset]
 		front := &front_buffer.cells[cell_offset]
 		attr, char := cell_to_char_info(*back)
+		charbuf = append(charbuf, char_info{attr: attr, char: char[0]})
+		*front = *back
 		w := runewidth.RuneWidth(back.Ch)
-		if w == 0 {
-			w = 1
-		}
 		if w == 0 || w == 2 && runewidth.IsAmbiguousWidth(back.Ch) {
 			w = 1
 		}
-		charbuf = append(charbuf, char_info{attr: attr, char: char[0]})
-		n++
-		*front = *back
-		x += w
+		n += w
 	}
 	return n
 }
