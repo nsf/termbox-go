@@ -166,6 +166,9 @@ func Flush() error {
 				back.Ch = ' '
 			}
 			w := runewidth.RuneWidth(back.Ch)
+			if w == 0 || w == 2 && runewidth.IsAmbiguousWidth(back.Ch) {
+				w = 1
+			}
 			if *back == *front {
 				x += w
 				continue

@@ -467,11 +467,7 @@ func append_diff_line(y int) int {
 		if w == 0 {
 			w = 1
 		}
-		if w == 2 {
-			// not enough space for a 2-cells rune,
-			// let's just put a space in there
-			front.Ch = ' '
-			char[0] = ' '
+		if w == 0 || w == 2 && runewidth.IsAmbiguousWidth(back.Ch) {
 			w = 1
 		}
 		charbuf = append(charbuf, char_info{attr: attr, char: char[0]})
