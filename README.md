@@ -11,7 +11,7 @@ There are also some interesting projects using termbox-go:
  - [godit](https://github.com/nsf/godit) is an emacsish lightweight text editor written using termbox.
  - [gomatrix](https://github.com/GeertJohan/gomatrix) connects to The Matrix and displays it's data streams in your terminal.
  - [httopd](https://github.com/verdverm/httopd) is top for httpd logs.
- - [termui] (https://github.com/gizak/termui) is a terminal dashboard.
+ - [termui](https://github.com/gizak/termui) is a terminal dashboard.
 
 ### API reference
 [godoc.org/github.com/nsf/termbox-go](http://godoc.org/github.com/nsf/termbox-go)
