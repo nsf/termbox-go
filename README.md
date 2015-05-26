@@ -12,6 +12,7 @@ There are also some interesting projects using termbox-go:
  - [gomatrix](https://github.com/GeertJohan/gomatrix) connects to The Matrix and displays it's data streams in your terminal.
  - [httopd](https://github.com/verdverm/httopd) is top for httpd logs.
  - [termui](https://github.com/gizak/termui) is a terminal dashboard.
+ - [gotetris](https://github.com/jjinux/gotetris) is an implementation of Tetris.
 
 ### API reference
 [godoc.org/github.com/nsf/termbox-go](http://godoc.org/github.com/nsf/termbox-go)
