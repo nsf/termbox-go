@@ -485,6 +485,7 @@ func append_diff_line(y int) int {
 func prepare_diff_messages() {
 	// clear buffers
 	diffbuf = diffbuf[:0]
+	charbuf = charbuf[:0]
 
 	var diff diff_msg
 	gbeg := 0
