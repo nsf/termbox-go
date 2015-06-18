@@ -14,6 +14,7 @@ There are also some interesting projects using termbox-go:
  - [sokoban-go](https://github.com/rn2dy/sokoban-go) is an implementation of sokoban game.
  - [hecate](https://github.com/evanmiller/hecate) is a hex editor designed by Satan.
  - [httopd](https://github.com/verdverm/httopd) is top for httpd logs.
+ - [mop](https://github.com/michaeldv/mop) is stock market tracker for hackers.
  - [termui](https://github.com/gizak/termui) is a terminal dashboard.
 
 ### API reference
