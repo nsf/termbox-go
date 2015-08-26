@@ -351,7 +351,7 @@ func PollEvent() Event {
 // terminal's window size in characters). But it doesn't always match the size
 // of the terminal window, after the terminal size has changed, the internal
 // back buffer will get in sync only after Clear or Flush function calls.
-func Size() (int, int) {
+func Size() (width int, height int) {
 	return termw, termh
 }
 
