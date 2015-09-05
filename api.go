@@ -380,6 +380,12 @@ func SetInputMode(mode InputMode) InputMode {
 	if mode == InputCurrent {
 		return input_mode
 	}
+	if mode&(InputEsc|InputAlt) == 0 {
+		mode |= InputEsc
+	}
+	if mode&(InputEsc|InputAlt) == InputEsc|InputAlt {
+		mode &^= InputAlt
+	}
 	if mode&InputMouse != 0 {
 		out.WriteString(funcs[t_enter_mouse])
 	} else {
