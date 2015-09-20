@@ -7,7 +7,6 @@ import "fmt"
 import "os"
 import "os/signal"
 import "syscall"
-import "runtime"
 
 // public API
 
@@ -27,7 +26,7 @@ func Init() error {
 	if err != nil {
 		return err
 	}
-	in, err = syscall.Open("/dev/tty", syscall.O_RDONLY, 0)
+	in, err = os.Open("/dev/tty")
 	if err != nil {
 		return err
 	}
@@ -38,34 +37,8 @@ func Init() error {
 	}
 
 	signal.Notify(sigwinch, syscall.SIGWINCH)
-	signal.Notify(sigio, syscall.SIGIO)
 
-	_, err = fcntl(in, syscall.F_SETFL, syscall.O_ASYNC|syscall.O_NONBLOCK)
-	if err != nil {
-		return err
-	}
-	_, err = fcntl(in, syscall.F_SETOWN, syscall.Getpid())
-	if runtime.GOOS != "darwin" && err != nil {
-		return err
-	}
-	err = tcgetattr(out.Fd(), &orig_tios)
-	if err != nil {
-		return err
-	}
-
-	tios := orig_tios
-	tios.Iflag &^= syscall_IGNBRK | syscall_BRKINT | syscall_PARMRK |
-		syscall_ISTRIP | syscall_INLCR | syscall_IGNCR |
-		syscall_ICRNL | syscall_IXON
-	tios.Oflag &^= syscall_OPOST
-	tios.Lflag &^= syscall_ECHO | syscall_ECHONL | syscall_ICANON |
-		syscall_ISIG | syscall_IEXTEN
-	tios.Cflag &^= syscall_CSIZE | syscall_PARENB
-	tios.Cflag |= syscall_CS8
-	tios.Cc[syscall_VMIN] = 1
-	tios.Cc[syscall_VTIME] = 0
-
-	err = tcsetattr(out.Fd(), &tios)
+	err = init_term(out)
 	if err != nil {
 		return err
 	}
@@ -85,20 +58,18 @@ func Init() error {
 		buf := make([]byte, 128)
 		for {
 			select {
-			case <-sigio:
-				for {
-					n, err := syscall.Read(in, buf)
-					if err == syscall.EAGAIN || err == syscall.EWOULDBLOCK {
-						break
-					}
-					select {
-					case input_comm <- input_event{buf[:n], err}:
-						ie := <-input_comm
-						buf = ie.data[:128]
-					case <-quit:
-						return
-					}
-				}
+			default:
+			case <-quit:
+				return
+			}
+			n, err := in.Read(buf)
+			if err != nil {
+				break
+			}
+			select {
+			case input_comm <- input_event{buf[:n], err}:
+				ie := <-input_comm
+				buf = ie.data[:128]
 			case <-quit:
 				return
 			}
@@ -126,17 +97,17 @@ func Close() {
 	out.WriteString(funcs[t_exit_ca])
 	out.WriteString(funcs[t_exit_keypad])
 	out.WriteString(funcs[t_exit_mouse])
-	tcsetattr(out.Fd(), &orig_tios)
+	fini_term(out)
 
 	out.Close()
-	syscall.Close(in)
+	in.Close()
 
 	// reset the state, so that on next Init() it will work again
 	termw = 0
 	termh = 0
 	input_mode = InputEsc
 	out = nil
-	in = 0
+	in = nil
 	lastfg = attr_invalid
 	lastbg = attr_invalid
 	lastx = coord_invalid

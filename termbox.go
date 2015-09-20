@@ -4,12 +4,30 @@ package termbox
 
 import "unicode/utf8"
 import "bytes"
-import "syscall"
-import "unsafe"
 import "strings"
 import "strconv"
 import "os"
 import "io"
+
+// #include <termios.h>
+// #include <sys/ioctl.h>
+// int tcsetattr(int fd, int opts, const struct termios *);
+// int tcgetattr(int fd, struct termios *);
+//
+// int gettermsize(int fd, int *x, int *y) {
+// #if defined TIOCGWINSZ
+//	struct winsize w;
+//	if (ioctl(fd, TIOCGWINSZ, &w) < 0) {
+//		return (-1);
+//	}
+//	*x = w.ws_col;
+//	*y = w.ws_row;
+//	return (0);
+// #else
+//      return (-1);
+// #endif
+// }
+import "C"
 
 // private API
 
@@ -47,7 +65,7 @@ var (
 	funcs []string
 
 	// termbox inner state
-	orig_tios      syscall_Termios
+	orig_tios      C.struct_termios
 	back_buffer    cellbuf
 	front_buffer   cellbuf
 	termw          int
@@ -55,7 +73,7 @@ var (
 	input_mode     = InputEsc
 	output_mode    = OutputNormal
 	out            *os.File
-	in             int
+	in             *os.File
 	lastfg         = attr_invalid
 	lastbg         = attr_invalid
 	lastx          = coord_invalid
@@ -126,18 +144,20 @@ func write_sgr(fg, bg Attribute) {
 	}
 }
 
-type winsize struct {
-	rows    uint16
-	cols    uint16
-	xpixels uint16
-	ypixels uint16
-}
-
 func get_term_size(fd uintptr) (int, int) {
-	var sz winsize
-	_, _, _ = syscall.Syscall(syscall.SYS_IOCTL,
-		fd, uintptr(syscall.TIOCGWINSZ), uintptr(unsafe.Pointer(&sz)))
-	return int(sz.cols), int(sz.rows)
+	var cx, cy C.int
+	if r, _ := C.gettermsize(C.int(fd), &cx, &cy); r == 0 {
+		return int(cx), int(cy)
+	}
+	x, _ := strconv.Atoi(os.Getenv("COLUMNS"))
+	y, _ := strconv.Atoi(os.Getenv("LINES"))
+	if x < 1 {
+		x = 80
+	}
+	if y < 1 {
+		y = 24
+	}
+	return x, y
 }
 
 func send_attr(fg, bg Attribute) {
@@ -263,20 +283,35 @@ func update_size_maybe() error {
 	return nil
 }
 
-func tcsetattr(fd uintptr, termios *syscall_Termios) error {
-	r, _, e := syscall.Syscall(syscall.SYS_IOCTL,
-		fd, uintptr(syscall_TCSETS), uintptr(unsafe.Pointer(termios)))
-	if r != 0 {
-		return os.NewSyscallError("SYS_IOCTL", e)
+func init_term(out *os.File) error {
+	fd := C.int(out.Fd())
+	if r, e := C.tcgetattr(fd, &orig_tios); r != 0 {
+		return e
 	}
+
+	tios := orig_tios
+	tios.c_iflag &^= C.IGNBRK | C.BRKINT | C.PARMRK |
+		C.ISTRIP | C.INLCR | C.IGNCR |
+		C.ICRNL | C.IXON
+	tios.c_oflag &^= C.OPOST
+	tios.c_lflag &^= C.ECHO | C.ECHONL | C.ICANON |
+		C.ISIG | C.IEXTEN
+	tios.c_cflag &^= C.CSIZE | C.PARENB
+	tios.c_cflag |= C.CS8
+	tios.c_cc[C.VMIN] = 1
+	tios.c_cc[C.VTIME] = 0
+
+	if r, e := C.tcsetattr(fd, C.TCSANOW, &tios); r != 0 {
+		return e
+	}
+
 	return nil
 }
 
-func tcgetattr(fd uintptr, termios *syscall_Termios) error {
-	r, _, e := syscall.Syscall(syscall.SYS_IOCTL,
-		fd, uintptr(syscall_TCGETS), uintptr(unsafe.Pointer(termios)))
-	if r != 0 {
-		return os.NewSyscallError("SYS_IOCTL", e)
+func fini_term(out *os.File) error {
+	fd := C.int(out.Fd())
+	if r, e := C.tcsetattr(fd, C.TCSANOW, &orig_tios); r != 0 {
+		return e
 	}
 	return nil
 }
@@ -394,14 +429,4 @@ func extract_event(inbuf []byte, event *Event) bool {
 	}
 
 	return false
-}
-
-func fcntl(fd int, cmd int, arg int) (val int, err error) {
-	r, _, e := syscall.Syscall(syscall.SYS_FCNTL, uintptr(fd), uintptr(cmd),
-		uintptr(arg))
-	val = int(r)
-	if e != 0 {
-		err = e
-	}
-	return
 }
