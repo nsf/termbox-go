@@ -17,6 +17,7 @@ There are also some interesting projects using termbox-go:
  - [mop](https://github.com/michaeldv/mop) is stock market tracker for hackers.
  - [termui](https://github.com/gizak/termui) is a terminal dashboard.
  - [termloop](https://github.com/JoelOtter/termloop) is a terminal game engine.
+ - [xterm-color-chart](https://github.com/kutuluk/xterm-color-chart) is a XTerm 256 color chart.
 
 ### API reference
 [godoc.org/github.com/nsf/termbox-go](http://godoc.org/github.com/nsf/termbox-go)
