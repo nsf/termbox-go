@@ -2,13 +2,14 @@ package main
 
 import (
 	"github.com/nsf/termbox-go"
+	"github.com/mattn/go-runewidth"
 	"unicode/utf8"
 )
 
 func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
 	for _, c := range msg {
 		termbox.SetCell(x, y, c, fg, bg)
-		x++
+		x += runewidth.RuneWidth(c)
 	}
 }
 
