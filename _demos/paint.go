@@ -6,12 +6,12 @@ import "github.com/kubaroth/termbox-go"
 
 import "time"
 
-func draw(_x int, _y int) {
+func draw(_x int, _y int, clr termbox.Attribute) {
     w, h := termbox.Size()
     for y := 0; y < h; y++ {
         for x := 0; x < w; x++ {
             if _x == x && _y == y {
-            termbox.SetCell(x, y, ' ', termbox.ColorDefault, 3)
+            termbox.SetCell(x, y, ' ', termbox.ColorDefault, clr)
             }
         }
     }
@@ -29,10 +29,13 @@ func main() {
 loop:
     for {
         ev := termbox.PollEvent(); 
-
-        if ev.Type == termbox.EventMouse && ev.Key == termbox.MouseLeft{
-            draw(ev.MouseX, ev.MouseY)
-            
+        // Draw
+        if ev.Type == termbox.EventMouse && ev.Key == termbox.MouseLeft || ev.Key == termbox.MouseDown{
+            draw(ev.MouseX, ev.MouseY, 3)
+        // Erase
+        } else if ev.Type == termbox.EventMouse && ev.Key == termbox.MouseAltLeft || ev.Key == termbox.MouseAltDown{
+            draw(ev.MouseX, ev.MouseY, 0)
+        // Exit
         } else if  ev.Type == termbox.EventKey && ev.Key == termbox.KeyEsc {
             break loop
         }

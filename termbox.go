@@ -10,6 +10,7 @@ import "strings"
 import "strconv"
 import "os"
 import "io"
+// import "fmt"
 
 // private API
 
@@ -291,14 +292,35 @@ func parse_escape_sequence(event *Event, buf []byte) (int, bool) {
 	bufstr := string(buf)
 	// mouse
 	if len(bufstr) >= 6 && strings.HasPrefix(bufstr, "\033[M") {
-		switch buf[3] & 3 {
-		case 0:
+		// fmt.Printf("%v\n", int(buf[3]))
+		switch int(buf[3]) {
+		case 32:
 			event.Key = MouseLeft
-		case 1:
+		case 33:
 			event.Key = MouseMiddle
-		case 2:
+		case 34:
 			event.Key = MouseRight
-		case 3:
+		case 35:
+			event.Key = MouseRelease
+		case 64:
+			event.Key = MouseDown
+		case 32 + 8:
+			event.Key = MouseAltLeft
+		case 33 + 8:
+			event.Key = MouseAltMiddle
+		case 34 + 8:
+			event.Key = MouseAltRight
+		case 64 + 8 :
+			event.Key = MouseAltDown
+		case 32 + 16:
+			event.Key = MouseCtrlLeft
+		case 33 + 16:
+			event.Key = MouseCtrlMiddle
+		case 34 + 16:
+			event.Key = MouseCtrlRight
+		case 64 + 16:
+			event.Key = MouseCtrlDown
+		default:
 			return 6, false
 		}
 		event.Type = EventMouse // KeyEvent by default
