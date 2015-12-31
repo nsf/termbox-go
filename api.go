@@ -387,9 +387,23 @@ func SetInputMode(mode InputMode) InputMode {
 		mode &^= InputAlt
 	}
 	if mode&InputMouse != 0 {
-		out.WriteString(funcs[t_enter_mouse])
+		/*
+		Instead enabling basic mouse mode: \e[?1000h
+		Use the one with mouse tracking which enables drag and drop capabilities 
+		echo -e "\e[?1002h"   // enable xterm mouse tracking
+		echo -e "\e[?1002l"   // disable
+		
+		See the links for more info
+		http://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
+		https://github.com/emacs-mirror/emacs/blob/master/lisp/xt-mouse.el
+		*/
+		
+		// out.WriteString(funcs[t_enter_mouse])
+		out.WriteString("\033[?1002h")
+
 	} else {
-		out.WriteString(funcs[t_exit_mouse])
+		// out.WriteString(funcs[t_exit_mouse])
+		out.WriteString("\033[?1002l")
 	}
 
 	input_mode = mode

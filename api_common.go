@@ -70,6 +70,16 @@ const (
 	MouseLeft
 	MouseMiddle
 	MouseRight
+	MouseRelease
+	MouseDown
+	MouseAltLeft
+	MouseAltMiddle
+	MouseAltRight
+	MouseAltDown
+	MouseCtrlLeft
+	MouseCtrlMiddle
+	MouseCtrlRight
+	MouseCtrlDown
 )
 
 const (
