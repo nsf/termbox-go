@@ -402,8 +402,8 @@ func parse_mouse_event(event *Event, buf string) (int, bool) {
 			event.Mod |= ModMotion
 		}
 
-		event.MouseX = int(n2)
-		event.MouseY = int(n3)
+		event.MouseX = int(n2) - 1
+		event.MouseY = int(n3) - 1
 		return mi + 1, true
 	}
 
