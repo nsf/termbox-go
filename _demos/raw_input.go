@@ -73,8 +73,12 @@ mainloop:
 				break mainloop
 			}
 
-			curev = termbox.ParseEvent(data)
-			if curev.N > 0 {
+			for {
+				ev := termbox.ParseEvent(data)
+				if ev.N == 0 {
+					break
+				}
+				curev = ev
 				copy(data, data[curev.N:])
 				data = data[:len(data)-curev.N]
 			}
