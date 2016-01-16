@@ -834,6 +834,9 @@ func input_event_producer() {
 				} else {
 					ev.Key = MouseWheelDown
 				}
+				last_x, last_y = int(mr.mouse_pos.x), int(mr.mouse_pos.y)
+				ev.MouseX = last_x
+				ev.MouseY = last_y
 			default:
 				ev.Type = EventNone
 			}
