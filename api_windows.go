@@ -81,8 +81,8 @@ func Close() {
 	cancel_comm <- true
 	set_event(interrupt)
 	select {
-		case <-input_comm:
-		default:
+	case <-input_comm:
+	default:
 	}
 	<-cancel_done_comm
 
