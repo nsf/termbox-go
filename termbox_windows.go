@@ -522,8 +522,16 @@ func prepare_diff_messages() {
 	}
 }
 
+func get_ct(table []word, idx int) word {
+	idx = idx & 0x0F
+	if idx >= len(table) {
+		idx = len(table) - 1
+	}
+	return table[idx]
+}
+
 func cell_to_char_info(c Cell) (attr word, wc [2]wchar) {
-	attr = color_table_fg[c.Fg&0x08] | color_table_bg[c.Bg&0x08]
+	attr = get_ct(color_table_fg, c.Fg) | get_ct(color_table_bg, c.Bg)
 	if c.Fg&AttrReverse|c.Bg&AttrReverse != 0 {
 		attr = (attr&0xF0)>>4 | (attr&0x0F)<<4
 	}
