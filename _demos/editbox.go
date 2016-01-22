@@ -117,7 +117,7 @@ func (eb *EditBox) Draw(x, y, w, h int) {
 			if rx >= 0 {
 				termbox.SetCell(x+rx, y, r, coldef, coldef)
 			}
-			lx += 1
+			lx += runewidth.RuneWidth(r)
 		}
 	next:
 		t = t[size:]
