@@ -531,7 +531,7 @@ func get_ct(table []word, idx int) word {
 }
 
 func cell_to_char_info(c Cell) (attr word, wc [2]wchar) {
-	attr = get_ct(color_table_fg, c.Fg) | get_ct(color_table_bg, c.Bg)
+	attr = get_ct(color_table_fg, int(c.Fg)) | get_ct(color_table_bg, int(c.Bg))
 	if c.Fg&AttrReverse|c.Bg&AttrReverse != 0 {
 		attr = (attr&0xF0)>>4 | (attr&0x0F)<<4
 	}
