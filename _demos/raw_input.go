@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/nsf/termbox-go"
+	"strings"
 )
 
 func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
@@ -15,16 +16,33 @@ func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
 var current string
 var curev termbox.Event
 
-func mouse_button_num(k termbox.Key) int {
+func mouse_button_str(k termbox.Key) string {
 	switch k {
 	case termbox.MouseLeft:
-		return 0
+		return "MouseLeft"
 	case termbox.MouseMiddle:
-		return 1
+		return "MouseMiddle"
 	case termbox.MouseRight:
-		return 2
+		return "MouseRight"
+	case termbox.MouseRelease:
+		return "MouseRelease"
+	case termbox.MouseWheelUp:
+		return "MouseWheelUp"
+	case termbox.MouseWheelDown:
+		return "MouseWheelDown"
 	}
-	return 0
+	return "Key"
+}
+
+func mod_str(m termbox.Modifier) string {
+	var out []string
+	if m&termbox.ModAlt != 0 {
+		out = append(out, "ModAlt")
+	}
+	if m&termbox.ModMotion != 0 {
+		out = append(out, "ModMotion")
+	}
+	return strings.Join(out, " | ")
 }
 
 func redraw_all() {
@@ -35,10 +53,11 @@ func redraw_all() {
 	switch curev.Type {
 	case termbox.EventKey:
 		tbprint(0, 2, coldef, coldef,
-			fmt.Sprintf("EventKey: k: %d, c: %c, mod: %d", curev.Key, curev.Ch, curev.Mod))
+			fmt.Sprintf("EventKey: k: %d, c: %c, mod: %s", curev.Key, curev.Ch, mod_str(curev.Mod)))
 	case termbox.EventMouse:
 		tbprint(0, 2, coldef, coldef,
-			fmt.Sprintf("EventMouse: x: %d, y: %d, b: %d", curev.MouseX, curev.MouseY, mouse_button_num(curev.Key)))
+			fmt.Sprintf("EventMouse: x: %d, y: %d, b: %s, mod: %s",
+				curev.MouseX, curev.MouseY, mouse_button_str(curev.Key), mod_str(curev.Mod)))
 	case termbox.EventNone:
 		tbprint(0, 2, coldef, coldef, "EventNone")
 	}
@@ -73,8 +92,12 @@ mainloop:
 				break mainloop
 			}
 
-			curev = termbox.ParseEvent(data)
-			if curev.N > 0 {
+			for {
+				ev := termbox.ParseEvent(data)
+				if ev.N == 0 {
+					break
+				}
+				curev = ev
 				copy(data, data[curev.N:])
 				data = data[:len(data)-curev.N]
 			}

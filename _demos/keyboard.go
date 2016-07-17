@@ -616,6 +616,15 @@ func pretty_print_mouse(ev *termbox.Event) {
 		button = "MouseMiddle: %d"
 	case termbox.MouseRight:
 		button = "MouseRight: %d"
+	case termbox.MouseWheelUp:
+		button = "MouseWheelUp: %d"
+	case termbox.MouseWheelDown:
+		button = "MouseWheelDown: %d"
+	case termbox.MouseRelease:
+		button = "MouseRelease: %d"
+	}
+	if ev.Mod&termbox.ModMotion != 0 {
+		button += "*"
 	}
 	counter++
 	printf_tb(43, 19, termbox.ColorWhite, termbox.ColorBlack, "Key: ")

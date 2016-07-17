@@ -84,24 +84,24 @@ func draw_all() {
 		print_wide(2+len(chars), 11, hello_world)
 
 	case termbox.OutputGrayscale:
-		for y := 0; y < 24; y++ {
-			for x := 0; x < 24; x++ {
+		for y := 0; y < 26; y++ {
+			for x := 0; x < 26; x++ {
 				termbox.SetCell(x, y, 'n',
 					termbox.Attribute(x+1),
 					termbox.Attribute(y+1))
-				termbox.SetCell(x+25, y, 'b',
+				termbox.SetCell(x+27, y, 'b',
 					termbox.Attribute(x+1)|termbox.AttrBold,
-					termbox.Attribute(24-y))
-				termbox.SetCell(x+50, y, 'u',
+					termbox.Attribute(26-y))
+				termbox.SetCell(x+54, y, 'u',
 					termbox.Attribute(x+1)|termbox.AttrUnderline,
 					termbox.Attribute(y+1))
 			}
-			termbox.SetCell(76, y, 'd',
+			termbox.SetCell(82, y, 'd',
 				termbox.Attribute(y+1),
 				termbox.ColorDefault)
-			termbox.SetCell(77, y, 'd',
+			termbox.SetCell(83, y, 'd',
 				termbox.ColorDefault,
-				termbox.Attribute(24-y))
+				termbox.Attribute(26-y))
 		}
 
 	case termbox.Output216:
