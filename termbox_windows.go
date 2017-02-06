@@ -616,6 +616,12 @@ func key_event_record_to_event(r *key_event_record) (Event, bool) {
 		}
 	}
 
+	// emulate xterm back-tab key
+	if r.unicode_char == 0x09 && r.control_key_state&shift_pressed != 0 {
+		e.Key = Key(r.virtual_scan_code | 0x200)
+		return e, true
+	}
+
 	ctrlpressed := r.control_key_state&(left_ctrl_pressed|right_ctrl_pressed) != 0
 
 	if r.virtual_key_code >= vk_f1 && r.virtual_key_code <= vk_f12 {
