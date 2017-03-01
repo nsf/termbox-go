@@ -26,6 +26,7 @@ There are also some interesting projects using termbox-go:
  - [Spoof.go](https://github.com/sabey/spoofgo) controllable movement spoofing from the cli
  - [lf](https://github.com/gokcehan/lf) is a terminal file manager
  - [rat](https://github.com/ericfreese/rat) lets you compose shell commands to build terminal applications.
+ - [httplab](https://github.com/gchaincl/httplab) An interactive web server.
 
 ### API reference
 [godoc.org/github.com/nsf/termbox-go](http://godoc.org/github.com/nsf/termbox-go)
