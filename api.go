@@ -199,6 +199,11 @@ func Flush() error {
 	return flush()
 }
 
+// Gets the position of the cursor.
+func GetCursor() (int, int) {
+	return cursor_x, cursor_y
+}
+
 // Sets the position of the cursor. See also HideCursor().
 func SetCursor(x, y int) {
 	if is_cursor_hidden(cursor_x, cursor_y) && !is_cursor_hidden(x, y) {
