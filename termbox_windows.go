@@ -1,9 +1,12 @@
 package termbox
 
-import "syscall"
-import "unsafe"
-import "unicode/utf16"
-import "github.com/mattn/go-runewidth"
+import (
+	"syscall"
+	"unicode/utf16"
+	"unsafe"
+
+	"github.com/mattn/go-runewidth"
+)
 
 type (
 	wchar     uint16
@@ -611,6 +614,12 @@ func key_event_record_to_event(r *key_event_record) (Event, bool) {
 		if r.control_key_state&(left_alt_pressed|right_alt_pressed) != 0 {
 			e.Mod = ModAlt
 		}
+	}
+
+	// emulate xterm back-tab key
+	if r.unicode_char == 0x09 && r.control_key_state&shift_pressed != 0 {
+		e.Key = Key(r.virtual_scan_code | 0x200)
+		return e, true
 	}
 
 	ctrlpressed := r.control_key_state&(left_ctrl_pressed|right_ctrl_pressed) != 0
