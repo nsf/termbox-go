@@ -3,8 +3,10 @@
 package termbox
 
 import "github.com/mattn/go-runewidth"
+import "github.com/gothyra/thyra/game"
 import "fmt"
 import "os"
+import "io"
 import "os/signal"
 import "syscall"
 import "runtime"
@@ -20,7 +22,8 @@ import "runtime"
 //              panic(err)
 //      }
 //      defer termbox.Close()
-func Init() error {
+
+func Init(c game.Client) error {
 	var err error
 
 	out, err = os.OpenFile("/dev/tty", syscall.O_WRONLY, 0)
@@ -69,10 +72,10 @@ func Init() error {
 		return err
 	}
 
-	out.WriteString(funcs[t_enter_ca])
-	out.WriteString(funcs[t_enter_keypad])
-	out.WriteString(funcs[t_hide_cursor])
-	out.WriteString(funcs[t_clear_screen])
+	io.WriteString(c.Conn, funcs[t_enter_ca])
+	io.WriteString(c.Conn, funcs[t_enter_keypad])
+	io.WriteString(c.Conn, funcs[t_hide_cursor])
+	io.WriteString(c.Conn, funcs[t_clear_screen])
 
 	termw, termh = get_term_size(out.Fd())
 	back_buffer.init(termw, termh)
@@ -117,14 +120,14 @@ func Interrupt() {
 
 // Finalizes termbox library, should be called after successful initialization
 // when termbox's functionality isn't required anymore.
-func Close() {
+func Close(c game.Client) {
 	quit <- 1
-	out.WriteString(funcs[t_show_cursor])
-	out.WriteString(funcs[t_sgr0])
-	out.WriteString(funcs[t_clear_screen])
-	out.WriteString(funcs[t_exit_ca])
-	out.WriteString(funcs[t_exit_keypad])
-	out.WriteString(funcs[t_exit_mouse])
+	io.WriteString(c.Conn, funcs[t_show_cursor])
+	io.WriteString(c.Conn, funcs[t_sgr0])
+	io.WriteString(c.Conn, funcs[t_clear_screen])
+	io.WriteString(c.Conn, funcs[t_exit_ca])
+	io.WriteString(c.Conn, funcs[t_exit_keypad])
+	io.WriteString(c.Conn, funcs[t_exit_mouse])
 	tcsetattr(out.Fd(), &orig_tios)
 
 	out.Close()
@@ -148,12 +151,12 @@ func Close() {
 }
 
 // Synchronizes the internal back buffer with the terminal.
-func Flush() error {
+func Flush(c game.Client) error {
 	// invalidate cursor position
 	lastx = coord_invalid
 	lasty = coord_invalid
 
-	update_size_maybe()
+	update_size_maybe(c)
 
 	for y := 0; y < front_buffer.height; y++ {
 		line_offset := y * front_buffer.width
@@ -196,7 +199,7 @@ func Flush() error {
 	if !is_cursor_hidden(cursor_x, cursor_y) {
 		write_cursor(cursor_x, cursor_y)
 	}
-	return flush()
+	return flush(c)
 }
 
 // Sets the position of the cursor. See also HideCursor().
@@ -354,9 +357,9 @@ func Size() (width int, height int) {
 }
 
 // Clears the internal back buffer.
-func Clear(fg, bg Attribute) error {
+func Clear(fg, bg Attribute, c game.Client) error {
 	foreground, background = fg, bg
-	err := update_size_maybe()
+	err := update_size_maybe(c)
 	back_buffer.clear()
 	return err
 }
@@ -446,12 +449,12 @@ func SetOutputMode(mode OutputMode) OutputMode {
 // of a terminal buffer and the reality. Such as a third party process. Sync
 // forces a complete resync between the termbox and a terminal, it may not be
 // visually pretty though.
-func Sync() error {
+func Sync(c game.Client) error {
 	front_buffer.clear()
-	err := send_clear()
+	err := send_clear(c)
 	if err != nil {
 		return err
 	}
 
-	return Flush()
+	return Flush(c)
 }

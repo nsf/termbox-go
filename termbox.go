@@ -11,6 +11,8 @@ import "strconv"
 import "os"
 import "io"
 
+import "github.com/gothyra/thyra/game"
+
 // private API
 
 const (
@@ -230,13 +232,13 @@ func send_char(x, y int, ch rune) {
 	outbuf.Write(buf[:n])
 }
 
-func flush() error {
+func flush(c game.Client) error {
 	_, err := io.Copy(out, &outbuf)
 	outbuf.Reset()
 	return err
 }
 
-func send_clear() error {
+func send_clear(c game.Client) error {
 	send_attr(foreground, background)
 	outbuf.WriteString(funcs[t_clear_screen])
 	if !is_cursor_hidden(cursor_x, cursor_y) {
@@ -251,17 +253,17 @@ func send_clear() error {
 	lastx = coord_invalid
 	lasty = coord_invalid
 
-	return flush()
+	return flush(c)
 }
 
-func update_size_maybe() error {
+func update_size_maybe(c game.Client) error {
 	w, h := get_term_size(out.Fd())
 	if w != termw || h != termh {
 		termw, termh = w, h
 		back_buffer.resize(termw, termh)
 		front_buffer.resize(termw, termh)
 		front_buffer.clear()
-		return send_clear()
+		return send_clear(c)
 	}
 	return nil
 }
