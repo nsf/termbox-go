@@ -481,7 +481,7 @@ func extract_event(inbuf []byte, event *Event) bool {
 	// so, it's a FUNCTIONAL KEY or a UNICODE character
 
 	// first of all check if it's a functional key
-	if Key(inbuf[0]) <= KeySpace || Key(inbuf[0]) == KeyBackspace2 {
+	if Key(inbuf[0]) < KeySpace || Key(inbuf[0]) == KeyBackspace2 {
 		// fill event, pop buffer, return success
 		event.Ch = 0
 		event.Key = Key(inbuf[0])
@@ -492,7 +492,11 @@ func extract_event(inbuf []byte, event *Event) bool {
 	// the only possible option is utf8 rune
 	if r, n := utf8.DecodeRune(inbuf); r != utf8.RuneError {
 		event.Ch = r
-		event.Key = 0
+		if r == rune(KeySpace) {
+			event.Key = KeySpace
+		} else {
+			event.Key = 0
+		}
 		event.N = n
 		return true
 	}
