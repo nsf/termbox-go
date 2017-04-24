@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"strings"
 )
 
@@ -26,6 +27,8 @@ const (
 	ti_mouse_enter   = "\x1b[?1000h\x1b[?1002h\x1b[?1015h\x1b[?1006h"
 	ti_mouse_leave   = "\x1b[?1006l\x1b[?1015l\x1b[?1002l\x1b[?1000l"
 )
+
+var fallbackTry bool
 
 func load_terminfo() ([]byte, error) {
 	var data []byte
@@ -70,6 +73,7 @@ func load_terminfo() ([]byte, error) {
 	}
 
 	// fall back to /usr/share/terminfo
+	fallbackTry = true
 	return ti_try_path("/usr/share/terminfo")
 }
 
@@ -83,10 +87,26 @@ func ti_try_path(path string) (data []byte, err error) {
 	if err == nil {
 		return
 	}
+	if fallbackTry == true && term == "xterm" && runtime.GOOS == "linux" {
+		terminfo := "/lib/terminfo/x/" + term
+		data, err = ioutil.ReadFile(terminfo)
+		if err == nil {
+			return
+		}
 
+	}
 	// fallback to darwin specific dirs structure
 	terminfo = path + "/" + hex.EncodeToString([]byte(term[:1])) + "/" + term
 	data, err = ioutil.ReadFile(terminfo)
+
+	if fallbackTry == true && err != nil {
+		println("")
+		panic(" Ubuntu users need to run these commands to install termbox's dependencies.\n" +
+			"\t$TERM should also be set to either \"xterm\" or \"xterm-*\"" +
+			" for this pkg to function correctly.\n\n" +
+			"\tsudo apt-get install ncurses-base\n" +
+			"\techo $TERM")
+	}
 	return
 }
 
