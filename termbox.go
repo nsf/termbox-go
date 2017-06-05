@@ -448,7 +448,16 @@ func extract_event(inbuf []byte, event *Event) bool {
 
 	if inbuf[0] == '\033' {
 		// possible escape sequence
-		if n, ok := parse_escape_sequence(event, inbuf); n != 0 {
+		n, ok := parse_escape_sequence(event, inbuf);
+		if !ok {
+			// check for broken mouse sequence (osx, xterm-only)
+			if len(inbuf) > 2 && inbuf[1] == '[' && inbuf[2] == '<' {
+				return false
+			}
+		}
+
+		// either a valid escape sequence or a key
+		if n != 0 {
 			event.N = n
 			return ok
 		}
