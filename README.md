@@ -28,6 +28,7 @@ There are also some interesting projects using termbox-go:
  - [rat](https://github.com/ericfreese/rat) lets you compose shell commands to build terminal applications.
  - [httplab](https://github.com/gchaincl/httplab) An interactive web server.
  - [tetris](https://github.com/MichaelS11/tetris) Go Tetris with AI option
+ - [wot](https://github.com/kyu-suke/wot) Wait time during command is completed.
 
 ### API reference
 [godoc.org/github.com/nsf/termbox-go](http://godoc.org/github.com/nsf/termbox-go)
