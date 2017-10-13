@@ -32,6 +32,7 @@ There are also some interesting projects using termbox-go:
  - [2048-go](https://github.com/1984weed/2048-go) is 2048 in Go
  - [jv](https://github.com/maxzender/jv) helps you view JSON on the command-line.
  - [pinger](https://github.com/hirose31/pinger) helps you to monitor numerous hosts using ICMP ECHO_REQUEST.
+ - [vixl44](https://github.com/sebashwa/vixl44) lets you create pixel art inside your terminal using vim movements
 
 ### API reference
 [godoc.org/github.com/nsf/termbox-go](http://godoc.org/github.com/nsf/termbox-go)
