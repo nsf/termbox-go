@@ -425,7 +425,7 @@ func parse_escape_sequence(event *Event, buf []byte) (int, bool) {
 		}
 	}
 
-	// if none of the keys match, let's try mouse seqences
+	// if none of the keys match, let's try mouse sequences
 	return parse_mouse_event(event, bufstr)
 }
 
