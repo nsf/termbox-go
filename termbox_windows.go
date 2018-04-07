@@ -467,8 +467,9 @@ func get_win_size(out syscall.Handle) coord {
 }
 
 func update_size_maybe() {
-	size := get_term_size(out)
+	size := get_win_size(out)
 	if size.x != term_size.x || size.y != term_size.y {
+		set_console_screen_buffer_size(out, size)
 		term_size = size
 		back_buffer.resize(int(size.x), int(size.y))
 		front_buffer.resize(int(size.x), int(size.y))
