@@ -6,6 +6,8 @@ import "unicode/utf8"
 import "bytes"
 import "syscall"
 import "unsafe"
+
+// import "log"
 import "strings"
 import "strconv"
 import "os"
@@ -453,7 +455,7 @@ func extract_event(inbuf []byte, event *Event, allow_esc_wait bool) extract_even
 		event.N = 0
 		return event_not_extracted
 	}
-
+	// log.Printf("%#v", inbuf)
 	if inbuf[0] == '\033' {
 		// possible escape sequence
 		if n, ok := parse_escape_sequence(event, inbuf); n != 0 {
@@ -472,16 +474,14 @@ func extract_event(inbuf []byte, event *Event, allow_esc_wait bool) extract_even
 		}
 
 		// it's not escape sequence, then it's Alt or Esc, check input_mode
-		switch {
-		case input_mode&InputEsc != 0:
-			// if we're in escape mode, fill Esc event, pop buffer, return success
+		switch len(inbuf) {
+		case 1:
 			event.Ch = 0
 			event.Key = KeyEsc
 			event.Mod = 0
 			event.N = 1
 			return event_extracted
-		case input_mode&InputAlt != 0:
-			// if we're in alt mode, set Alt modifier to event and redo parsing
+		default:
 			event.Mod = ModAlt
 			status := extract_event(inbuf[1:], event, false)
 			if status == event_extracted {
@@ -490,9 +490,30 @@ func extract_event(inbuf []byte, event *Event, allow_esc_wait bool) extract_even
 				event.N = 0
 			}
 			return status
-		default:
-			panic("unreachable")
 		}
+		/*
+			switch {
+			case input_mode&InputEsc != 0:
+				// if we're in escape mode, fill Esc event, pop buffer, return success
+				event.Ch = 0
+				event.Key = KeyEsc
+				event.Mod = 0
+				event.N = 1
+				return event_extracted
+			case input_mode&InputAlt != 0:
+				// if we're in alt mode, set Alt modifier to event and redo parsing
+				event.Mod = ModAlt
+				status := extract_event(inbuf[1:], event, false)
+				if status == event_extracted {
+					event.N++
+				} else {
+					event.N = 0
+				}
+				return status
+			default:
+				panic("unreachable")
+			}
+		*/
 	}
 
 	// if we're here, this is not an escape sequence and not an alt sequence
