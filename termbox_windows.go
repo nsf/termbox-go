@@ -278,6 +278,7 @@ func set_console_mode(h syscall.Handle, mode dword) (err error) {
 }
 
 func fill_console_output_character(h syscall.Handle, char wchar, n int) (err error) {
+    tmp_coord  = coord{0, 0}
 	r0, _, e1 := syscall.Syscall6(proc_fill_console_output_character.Addr(),
 		5, uintptr(h), uintptr(char), uintptr(n), tmp_coord.uintptr(),
 		uintptr(unsafe.Pointer(&tmp_arg)), 0)
@@ -292,6 +293,7 @@ func fill_console_output_character(h syscall.Handle, char wchar, n int) (err err
 }
 
 func fill_console_output_attribute(h syscall.Handle, attr word, n int) (err error) {
+    tmp_coord  = coord{0, 0}
 	r0, _, e1 := syscall.Syscall6(proc_fill_console_output_attribute.Addr(),
 		5, uintptr(h), uintptr(attr), uintptr(n), tmp_coord.uintptr(),
 		uintptr(unsafe.Pointer(&tmp_arg)), 0)
