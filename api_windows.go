@@ -43,14 +43,14 @@ func Init() error {
 	}
 
 	orig_size, orig_window = get_term_size(out)
-	win_size, window := get_win_size(out)
+	win_size := get_win_size(out)
 
 	err = set_console_screen_buffer_size(out, win_size)
 	if err != nil {
 		return err
 	}
 
-	err = fix_win_size(out, &window)
+	err = fix_win_size(out, win_size)
 	if err != nil {
 		return err
 	}

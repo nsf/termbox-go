@@ -465,7 +465,7 @@ func get_win_min_size(out syscall.Handle) coord {
 	}
 }
 
-func get_win_size(out syscall.Handle) (coord, small_rect) {
+func get_win_size(out syscall.Handle) coord {
 	err := get_console_screen_buffer_info(out, &tmp_info)
 	if err != nil {
 		panic(err)
@@ -486,22 +486,23 @@ func get_win_size(out syscall.Handle) (coord, small_rect) {
 		size.y = min_size.y
 	}
 
-	return size, tmp_info.window
+	return size
 }
 
-func fix_win_size(out syscall.Handle, window *small_rect) (err error) {
-	window.bottom -= window.top
+func fix_win_size(out syscall.Handle, size coord) (err error) {
+	window := small_rect{}
 	window.top = 0
-	window.right -= window.left
+	window.bottom = size.y - 1
 	window.left = 0
-	return set_console_window_info(out, window)
+	window.right = size.x - 1
+	return set_console_window_info(out, &window)
 }
 
 func update_size_maybe() {
-	size, window := get_win_size(out)
+	size := get_win_size(out)
 	if size.x != term_size.x || size.y != term_size.y {
 		set_console_screen_buffer_size(out, size)
-		fix_win_size(out, &window)
+		fix_win_size(out, size)
 		term_size = size
 		back_buffer.resize(int(size.x), int(size.y))
 		front_buffer.resize(int(size.x), int(size.y))
