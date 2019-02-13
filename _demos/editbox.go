@@ -75,7 +75,7 @@ type EditBox struct {
 	cursor_coffset int // cursor offset in unicode code points
 }
 
-// Draws the EditBox in the given location, 'h' is not used at the moment
+// Draw: Draws the EditBox in the given location, 'h' is not used at the moment
 func (eb *EditBox) Draw(x, y, w, h int) {
 	eb.AdjustVOffset(w)
 
@@ -128,7 +128,7 @@ func (eb *EditBox) Draw(x, y, w, h int) {
 	}
 }
 
-// Adjusts line visual offset to a proper value depending on width
+// AdjustVOffset: Adjusts line visual offset to a proper value depending on width
 func (eb *EditBox) AdjustVOffset(width int) {
 	ht := preferred_horizontal_threshold
 	max_h_threshold := (width - 1) / 2
@@ -218,7 +218,7 @@ func (eb *EditBox) InsertRune(r rune) {
 	eb.MoveCursorOneRuneForward()
 }
 
-// Please, keep in mind that cursor depends on the value of line_voffset, which
+// CursorX: Please, keep in mind that cursor depends on the value of line_voffset, which
 // is being set on Draw() call, so.. call this method after Draw() one.
 func (eb *EditBox) CursorX() int {
 	return eb.cursor_voffset - eb.line_voffset

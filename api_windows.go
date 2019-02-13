@@ -6,7 +6,7 @@ import (
 
 // public API
 
-// Initializes termbox library. This function should be called before any other functions.
+// Init: Initializes termbox library. This function should be called before any other functions.
 // After successful initialization, the library must be finalized using 'Close' function.
 //
 // Example usage:
@@ -75,7 +75,7 @@ func Init() error {
 	return nil
 }
 
-// Finalizes termbox library, should be called after successful initialization
+// Close: Finalizes termbox library, should be called after successful initialization
 // when termbox's functionality isn't required anymore.
 func Close() {
 	// we ignore errors here, because we can't really do anything about them
@@ -109,7 +109,7 @@ func Interrupt() {
 	interrupt_comm <- struct{}{}
 }
 
-// Synchronizes the internal back buffer with the terminal.
+// Flush: Synchronizes the internal back buffer with the terminal.
 func Flush() error {
 	update_size_maybe()
 	prepare_diff_messages()
@@ -128,7 +128,7 @@ func Flush() error {
 	return nil
 }
 
-// Sets the position of the cursor. See also HideCursor().
+// SetCursor: Sets the position of the cursor. See also HideCursor().
 func SetCursor(x, y int) {
 	if is_cursor_hidden(cursor_x, cursor_y) && !is_cursor_hidden(x, y) {
 		show_cursor(true)
@@ -144,12 +144,12 @@ func SetCursor(x, y int) {
 	}
 }
 
-// The shortcut for SetCursor(-1, -1).
+// HideCursor: The shortcut for SetCursor(-1, -1).
 func HideCursor() {
 	SetCursor(cursor_hidden, cursor_hidden)
 }
 
-// Changes cell's parameters in the internal back buffer at the specified
+// SetCell: Changes cell's parameters in the internal back buffer at the specified
 // position.
 func SetCell(x, y int, ch rune, fg, bg Attribute) {
 	if x < 0 || x >= back_buffer.width {
@@ -162,14 +162,14 @@ func SetCell(x, y int, ch rune, fg, bg Attribute) {
 	back_buffer.cells[y*back_buffer.width+x] = Cell{ch, fg, bg}
 }
 
-// Returns a slice into the termbox's back buffer. You can get its dimensions
+// CellBuffer returns a slice into the termbox's back buffer. You can get its dimensions
 // using 'Size' function. The slice remains valid as long as no 'Clear' or
 // 'Flush' function calls were made after call to this function.
 func CellBuffer() []Cell {
 	return back_buffer.cells
 }
 
-// Wait for an event and return it. This is a blocking function call.
+// PollEvent: Wait for an event and return it. This is a blocking function call.
 func PollEvent() Event {
 	select {
 	case ev := <-input_comm:
@@ -179,7 +179,7 @@ func PollEvent() Event {
 	}
 }
 
-// Returns the size of the internal back buffer (which is mostly the same as
+// Size returns the size of the internal back buffer (which is mostly the same as
 // console's window size in characters). But it doesn't always match the size
 // of the console window, after the console size has changed, the internal back
 // buffer will get in sync only after Clear or Flush function calls.
@@ -187,7 +187,7 @@ func Size() (int, int) {
 	return int(term_size.x), int(term_size.y)
 }
 
-// Clears the internal back buffer.
+// Clear clears the internal back buffer.
 func Clear(fg, bg Attribute) error {
 	foreground, background = fg, bg
 	update_size_maybe()
@@ -195,7 +195,7 @@ func Clear(fg, bg Attribute) error {
 	return nil
 }
 
-// Sets termbox input mode. Termbox has two input modes:
+// SetInputMode: Sets termbox input mode. Termbox has two input modes:
 //
 // 1. Esc input mode. When ESC sequence is in the buffer and it doesn't match
 // any known sequence. ESC means KeyEsc. This is the default input mode.
@@ -228,7 +228,7 @@ func SetInputMode(mode InputMode) InputMode {
 	return input_mode
 }
 
-// Sets the termbox output mode.
+// SetOutputMode: Sets the termbox output mode.
 //
 // Windows console does not support extra colour modes,
 // so this will always set and return OutputNormal.
