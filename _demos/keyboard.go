@@ -1,7 +1,11 @@
 package main
 
-import "github.com/nsf/termbox-go"
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/mattn/go-runewidth"
+	"github.com/nsf/termbox-go"
+)
 
 type key struct {
 	x  int
@@ -172,6 +176,37 @@ var K_ARROW_DOWN = []key{{54, 12, '('}, {55, 12, 0x2193}, {56, 12, ')'}}
 var K_ARROW_RIGHT = []key{{58, 12, '('}, {59, 12, 0x2192}, {60, 12, ')'}}
 var K_K_0 = []key{{65, 12, ' '}, {66, 12, '0'}, {67, 12, ' '}, {68, 12, ' '}}
 var K_K_PERIOD = []key{{71, 12, '.'}}
+
+var borderTopLeft rune = 0x250C
+var borderTopRight rune = 0x2510
+var borderBotomLeft rune = 0x2514
+var borderBottomRight rune = 0x2518
+var borderVertical rune = 0x2500
+var borderHorizontal rune = 0x2502
+var borderHorizontalLeftBar rune = 0x251C
+var borderHorizontalRight rune = 0x2524
+var boxShadow rune = 0x2588
+
+func init() {
+	if runewidth.EastAsianWidth {
+		K_BACKSPACE[0].ch = '<'
+		K_BACKSPACE[1].ch = '-'
+		K_BACKSPACE[2].ch = '-'
+		K_ARROW_UP[1].ch = '^'
+		K_ARROW_DOWN[1].ch = 'v'
+		K_ARROW_LEFT[1].ch = '<'
+		K_ARROW_RIGHT[1].ch = '>'
+		borderTopLeft = '+'
+		borderTopRight = '+'
+		borderBotomLeft = '+'
+		borderBottomRight = '+'
+		borderVertical = '-'
+		borderHorizontal = '|'
+		borderHorizontalLeftBar = '+'
+		borderHorizontalRight = '+'
+		boxShadow = ' '
+	}
+}
 
 type combo struct {
 	keys [][]key
@@ -352,28 +387,28 @@ func draw_key(k []key, fg, bg termbox.Attribute) {
 }
 
 func draw_keyboard() {
-	termbox.SetCell(0, 0, 0x250C, termbox.ColorWhite, termbox.ColorBlack)
-	termbox.SetCell(79, 0, 0x2510, termbox.ColorWhite, termbox.ColorBlack)
-	termbox.SetCell(0, 23, 0x2514, termbox.ColorWhite, termbox.ColorBlack)
-	termbox.SetCell(79, 23, 0x2518, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(0, 0, borderTopLeft, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(79, 0, borderTopRight, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(0, 23, borderBotomLeft, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(79, 23, borderBottomRight, termbox.ColorWhite, termbox.ColorBlack)
 
 	for i := 1; i < 79; i++ {
-		termbox.SetCell(i, 0, 0x2500, termbox.ColorWhite, termbox.ColorBlack)
-		termbox.SetCell(i, 23, 0x2500, termbox.ColorWhite, termbox.ColorBlack)
-		termbox.SetCell(i, 17, 0x2500, termbox.ColorWhite, termbox.ColorBlack)
-		termbox.SetCell(i, 4, 0x2500, termbox.ColorWhite, termbox.ColorBlack)
+		termbox.SetCell(i, 0, borderVertical, termbox.ColorWhite, termbox.ColorBlack)
+		termbox.SetCell(i, 23, borderVertical, termbox.ColorWhite, termbox.ColorBlack)
+		termbox.SetCell(i, 17, borderVertical, termbox.ColorWhite, termbox.ColorBlack)
+		termbox.SetCell(i, 4, borderVertical, termbox.ColorWhite, termbox.ColorBlack)
 	}
 	for i := 1; i < 23; i++ {
-		termbox.SetCell(0, i, 0x2502, termbox.ColorWhite, termbox.ColorBlack)
-		termbox.SetCell(79, i, 0x2502, termbox.ColorWhite, termbox.ColorBlack)
+		termbox.SetCell(0, i, borderHorizontal, termbox.ColorWhite, termbox.ColorBlack)
+		termbox.SetCell(79, i, borderHorizontal, termbox.ColorWhite, termbox.ColorBlack)
 	}
-	termbox.SetCell(0, 17, 0x251C, termbox.ColorWhite, termbox.ColorBlack)
-	termbox.SetCell(79, 17, 0x2524, termbox.ColorWhite, termbox.ColorBlack)
-	termbox.SetCell(0, 4, 0x251C, termbox.ColorWhite, termbox.ColorBlack)
-	termbox.SetCell(79, 4, 0x2524, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(0, 17, borderHorizontalLeftBar, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(79, 17, borderHorizontalRight, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(0, 4, borderHorizontalLeftBar, termbox.ColorWhite, termbox.ColorBlack)
+	termbox.SetCell(79, 4, borderHorizontalRight, termbox.ColorWhite, termbox.ColorBlack)
 	for i := 5; i < 17; i++ {
-		termbox.SetCell(1, i, 0x2588, termbox.ColorYellow, termbox.ColorYellow)
-		termbox.SetCell(78, i, 0x2588, termbox.ColorYellow, termbox.ColorYellow)
+		termbox.SetCell(1, i, boxShadow, termbox.ColorYellow, termbox.ColorYellow)
+		termbox.SetCell(78, i, boxShadow, termbox.ColorYellow, termbox.ColorYellow)
 	}
 
 	draw_key(K_ESC, termbox.ColorWhite, termbox.ColorBlue)

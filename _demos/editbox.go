@@ -1,9 +1,10 @@
 package main
 
 import (
+	"unicode/utf8"
+
 	"github.com/mattn/go-runewidth"
 	"github.com/nsf/termbox-go"
-	"unicode/utf8"
 )
 
 func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
@@ -80,6 +81,8 @@ func (eb *EditBox) Draw(x, y, w, h int) {
 	eb.AdjustVOffset(w)
 
 	const coldef = termbox.ColorDefault
+	const colred = termbox.ColorRed
+
 	fill(x, y, w, h, termbox.Cell{Ch: ' '})
 
 	t := eb.text
@@ -96,8 +99,8 @@ func (eb *EditBox) Draw(x, y, w, h int) {
 		}
 
 		if rx >= w {
-			termbox.SetCell(x+w-1, y, '→',
-				coldef, coldef)
+			termbox.SetCell(x+w-1, y, arrowRight,
+				colred, coldef)
 			break
 		}
 
@@ -124,7 +127,7 @@ func (eb *EditBox) Draw(x, y, w, h int) {
 	}
 
 	if eb.line_voffset != 0 {
-		termbox.SetCell(x, y, '←', coldef, coldef)
+		termbox.SetCell(x, y, arrowLeft, colred, coldef)
 	}
 }
 
@@ -237,20 +240,41 @@ func redraw_all() {
 	midx := (w - edit_box_width) / 2
 
 	// unicode box drawing chars around the edit box
-	termbox.SetCell(midx-1, midy, '│', coldef, coldef)
-	termbox.SetCell(midx+edit_box_width, midy, '│', coldef, coldef)
-	termbox.SetCell(midx-1, midy-1, '┌', coldef, coldef)
-	termbox.SetCell(midx-1, midy+1, '└', coldef, coldef)
-	termbox.SetCell(midx+edit_box_width, midy-1, '┐', coldef, coldef)
-	termbox.SetCell(midx+edit_box_width, midy+1, '┘', coldef, coldef)
-	fill(midx, midy-1, edit_box_width, 1, termbox.Cell{Ch: '─'})
-	fill(midx, midy+1, edit_box_width, 1, termbox.Cell{Ch: '─'})
+	if runewidth.EastAsianWidth {
+		termbox.SetCell(midx-1, midy, '|', coldef, coldef)
+		termbox.SetCell(midx+edit_box_width, midy, '|', coldef, coldef)
+		termbox.SetCell(midx-1, midy-1, '+', coldef, coldef)
+		termbox.SetCell(midx-1, midy+1, '+', coldef, coldef)
+		termbox.SetCell(midx+edit_box_width, midy-1, '+', coldef, coldef)
+		termbox.SetCell(midx+edit_box_width, midy+1, '+', coldef, coldef)
+		fill(midx, midy-1, edit_box_width, 1, termbox.Cell{Ch: '-'})
+		fill(midx, midy+1, edit_box_width, 1, termbox.Cell{Ch: '-'})
+	} else {
+		termbox.SetCell(midx-1, midy, '│', coldef, coldef)
+		termbox.SetCell(midx+edit_box_width, midy, '│', coldef, coldef)
+		termbox.SetCell(midx-1, midy-1, '┌', coldef, coldef)
+		termbox.SetCell(midx-1, midy+1, '└', coldef, coldef)
+		termbox.SetCell(midx+edit_box_width, midy-1, '┐', coldef, coldef)
+		termbox.SetCell(midx+edit_box_width, midy+1, '┘', coldef, coldef)
+		fill(midx, midy-1, edit_box_width, 1, termbox.Cell{Ch: '─'})
+		fill(midx, midy+1, edit_box_width, 1, termbox.Cell{Ch: '─'})
+	}
 
 	edit_box.Draw(midx, midy, edit_box_width, 1)
 	termbox.SetCursor(midx+edit_box.CursorX(), midy)
 
 	tbprint(midx+6, midy+3, coldef, coldef, "Press ESC to quit")
 	termbox.Flush()
+}
+
+var arrowLeft = '←'
+var arrowRight = '→'
+
+func init() {
+	if runewidth.EastAsianWidth {
+		arrowLeft = '<'
+		arrowRight = '>'
+	}
 }
 
 func main() {
