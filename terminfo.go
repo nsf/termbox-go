@@ -120,6 +120,8 @@ func setup_term_builtin() error {
 		{"linux", linux_keys, linux_funcs},
 		{"Eterm", eterm_keys, eterm_funcs},
 		{"screen", screen_keys, screen_funcs},
+		// tmux seems to be screen compatible, see: https://github.com/tmux/tmux/blob/2.1/FAQ#L355-L383
+		{"tmux", screen_keys, screen_funcs},
 		// let's assume that 'cygwin' is xterm compatible
 		{"cygwin", xterm_keys, xterm_funcs},
 		{"st", xterm_keys, xterm_funcs},
