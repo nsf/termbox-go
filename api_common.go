@@ -124,6 +124,135 @@ const (
 	KeyCtrl8          Key = 0x7F
 )
 
+func (k Key) String() string {
+	switch k {
+	case KeyF1:
+		return "f1"
+	case KeyF2:
+		return "f2"
+	case KeyF3:
+		return "f3"
+	case KeyF4:
+		return "f4"
+	case KeyF5:
+		return "f5"
+	case KeyF6:
+		return "f6"
+	case KeyF7:
+		return "f7"
+	case KeyF8:
+		return "f8"
+	case KeyF9:
+		return "f9"
+	case KeyF10:
+		return "f10"
+	case KeyF11:
+		return "f11"
+	case KeyF12:
+		return "f12"
+	case KeyInsert:
+		return "insert"
+	case KeyDelete:
+		return "delete"
+	case KeyHome:
+		return "home"
+	case KeyEnd:
+		return "end"
+	case KeyPgup:
+		return "pgup"
+	case KeyPgdn:
+		return "pgdn"
+	case KeyArrowUp:
+		return "up"
+	case KeyArrowDown:
+		return "down"
+	case KeyArrowLeft:
+		return "left"
+	case KeyArrowRight:
+		return "right"
+	case MouseLeft:
+		return "mouse-left"
+	case MouseMiddle:
+		return "mouse-middle"
+	case MouseRight:
+		return "mouse-right"
+	case MouseRelease:
+		return "mouse-release"
+	case MouseWheelUp:
+		return "mouse-wheelup"
+	case MouseWheelDown:
+		return "mouse-wheeldown"
+	case KeyCtrlA:
+		return "ctrl-a"
+	case KeyCtrlB:
+		return "ctrl-b"
+	case KeyCtrlC:
+		return "ctrl-c"
+	case KeyCtrlD:
+		return "ctrl-d"
+	case KeyCtrlE:
+		return "ctrl-e"
+	case KeyCtrlF:
+		return "ctrl-f"
+	case KeyCtrlG:
+		return "ctrl-g"
+	case KeyCtrlH:
+		return "ctrl-h"
+	case KeyCtrlI:
+		return "ctrl-i"
+	case KeyCtrlJ:
+		return "ctrl-j"
+	case KeyCtrlK:
+		return "ctrl-k"
+	case KeyCtrlL:
+		return "ctrl-l"
+	case KeyCtrlM:
+		return "ctrl-m"
+	case KeyCtrlN:
+		return "ctrl-n"
+	case KeyCtrlO:
+		return "ctrl-o"
+	case KeyCtrlP:
+		return "ctrl-p"
+	case KeyCtrlQ:
+		return "ctrl-q"
+	case KeyCtrlR:
+		return "ctrl-r"
+	case KeyCtrlS:
+		return "ctrl-s"
+	case KeyCtrlT:
+		return "ctrl-t"
+	case KeyCtrlU:
+		return "ctrl-u"
+	case KeyCtrlV:
+		return "ctrl-v"
+	case KeyCtrlW:
+		return "ctrl-w"
+	case KeyCtrlX:
+		return "ctrl-x"
+	case KeyCtrlY:
+		return "ctrl-y"
+	case KeyCtrlZ:
+		return "ctrl-z"
+	case KeyCtrl3:
+		return "ctrl-3"
+	case KeyCtrl4:
+		return "ctrl-4"
+	case KeyCtrl5:
+		return "ctrl-5"
+	case KeyCtrl6:
+		return "ctrl-6"
+	case KeyCtrl7:
+		return "ctrl-7"
+	case KeySpace:
+		return "space"
+	case KeyCtrl8:
+		return "ctrl-8"
+	default:
+		return ""
+	}
+}
+
 // Alt modifier constant, see Event.Mod field and SetInputMode function.
 const (
 	ModAlt Modifier = 1 << iota
