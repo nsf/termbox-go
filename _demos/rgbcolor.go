@@ -20,6 +20,7 @@ var bgB uint8 = 150
 var currentBold bool = true
 var currentUnderline bool = false
 var currentReverse bool = false
+var currentCursive bool = false
 
 var boolLabel map[bool]string = make(map[bool]string)
 
@@ -59,10 +60,11 @@ func redraw_all() {
 	tbprint(23, 7, coldef, coldef, "Background Blue:")
 	tbprint(24, 8, coldef, coldef, "[U] "+b+" [I]")
 
-	var bold, ul, rev string
+	var bold, ul, rev, cur string
 	bold = boolLabel[currentBold]
 	ul = boolLabel[currentUnderline]
 	rev = boolLabel[currentReverse]
+	cur = boolLabel[currentCursive]
 
 	tbprint(42, 3, coldef, coldef, "Bold:")
 	tbprint(43, 4, coldef, coldef, bold+" [w]")
@@ -70,6 +72,8 @@ func redraw_all() {
 	tbprint(43, 6, coldef, coldef, ul+" [a]")
 	tbprint(42, 7, coldef, coldef, "Reverse:")
 	tbprint(43, 8, coldef, coldef, rev+" [s]")
+	tbprint(42, 9, coldef, coldef, "Cursive:")
+	tbprint(43, 10, coldef, coldef, cur+" [d]")
 
 	tbprint(20, 10, coldef, coldef, "Quit with [q] or [ESC]")
 
@@ -77,7 +81,6 @@ func redraw_all() {
 	tfg := fg
 	bg := termbox.RGBToAttribute(uint8(bgR), uint8(bgG), uint8(bgB))
 	if currentBold {
-		fg |= termbox.AttrBold
 		tfg |= termbox.AttrBold
 	}
 	if currentUnderline {
@@ -86,6 +89,9 @@ func redraw_all() {
 	if currentReverse {
 		fg |= termbox.AttrReverse
 		tfg |= termbox.AttrReverse
+	}
+	if currentCursive {
+		tfg |= termbox.AttrCursive
 	}
 	tbprint(18, 12, fg, bg, padding)
 	tbprint(18, 13, tfg, bg, preview)
@@ -149,6 +155,8 @@ mainloop:
 					currentUnderline = !currentUnderline
 				case 's', 'S':
 					currentReverse = !currentReverse
+				case 'd', 'D':
+					currentCursive = !currentCursive
 				}
 			}
 		case termbox.EventError:
