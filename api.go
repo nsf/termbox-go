@@ -498,3 +498,20 @@ func Sync() error {
 
 	return Flush()
 }
+
+func AttributeToRGB(attr Attribute) (uint8, uint8, uint8) {
+	var color uint64 = uint64(attr) / uint64(AttrReverse)
+	// Have to right-shift with the highest attribute bit
+	var b uint8 = uint8(color % 256)
+	var g uint8 = uint8(color >> 8 % 256)
+	var r uint8 = uint8(color >> 16 % 256)
+	return r, g, b
+}
+
+func RGBToAttribute(r uint8, g uint8, b uint8) Attribute {
+	var color uint64 = uint64(b)
+	color += uint64(g) << 8
+	color += uint64(r) << 16
+	color = color * uint64(AttrReverse)
+	return Attribute(color)
+}
