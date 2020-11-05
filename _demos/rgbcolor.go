@@ -21,6 +21,9 @@ var currentBold bool = true
 var currentUnderline bool = false
 var currentReverse bool = false
 var currentCursive bool = false
+var currentHidden bool = false
+var currentBlink bool = false
+var currentDim bool = false
 
 var boolLabel map[bool]string = make(map[bool]string)
 
@@ -60,11 +63,14 @@ func redraw_all() {
 	tbprint(23, 7, coldef, coldef, "Background Blue:")
 	tbprint(24, 8, coldef, coldef, "[U] "+b+" [I]")
 
-	var bold, ul, rev, cur string
+	var bold, ul, rev, cur, hid, blink, dim string
 	bold = boolLabel[currentBold]
 	ul = boolLabel[currentUnderline]
 	rev = boolLabel[currentReverse]
 	cur = boolLabel[currentCursive]
+	hid = boolLabel[currentHidden]
+	blink = boolLabel[currentBlink]
+	dim = boolLabel[currentDim]
 
 	tbprint(42, 3, coldef, coldef, "Bold:")
 	tbprint(43, 4, coldef, coldef, bold+" [w]")
@@ -72,10 +78,17 @@ func redraw_all() {
 	tbprint(43, 6, coldef, coldef, ul+" [a]")
 	tbprint(42, 7, coldef, coldef, "Reverse:")
 	tbprint(43, 8, coldef, coldef, rev+" [s]")
-	tbprint(42, 9, coldef, coldef, "Cursive:")
-	tbprint(43, 10, coldef, coldef, cur+" [d]")
+	tbprint(54, 3, coldef, coldef, "Cursive:")
+	tbprint(55, 4, coldef, coldef, cur+" [d]")
+	tbprint(54, 5, coldef, coldef, "Hidden:")
+	tbprint(55, 6, coldef, coldef, hid+" [e]")
+	tbprint(54, 7, coldef, coldef, "Blink:")
+	tbprint(55, 8, coldef, coldef, blink+" [r]")
+	tbprint(54, 9, coldef, coldef, "Dim:")
+	tbprint(55, 10, coldef, coldef, dim+" [f]")
 
 	tbprint(20, 10, coldef, coldef, "Quit with [q] or [ESC]")
+	tbprint(6, 11, coldef|termbox.AttrDim, coldef, "Note that RGB may be incompatible with other modifiers")
 
 	fg := termbox.RGBToAttribute(uint8(fgR), uint8(fgG), uint8(fgB))
 	tfg := fg
@@ -92,6 +105,18 @@ func redraw_all() {
 	}
 	if currentCursive {
 		tfg |= termbox.AttrCursive
+	}
+	if currentHidden {
+		fg |= termbox.AttrHidden
+		tfg |= termbox.AttrHidden
+	}
+	if currentBlink {
+		fg |= termbox.AttrBlink
+		tfg |= termbox.AttrBlink
+	}
+	if currentDim {
+		fg |= termbox.AttrDim
+		tfg |= termbox.AttrDim
 	}
 	tbprint(18, 12, fg, bg, padding)
 	tbprint(18, 13, tfg, bg, preview)
@@ -157,6 +182,12 @@ mainloop:
 					currentReverse = !currentReverse
 				case 'd', 'D':
 					currentCursive = !currentCursive
+				case 'e', 'E':
+					currentHidden = !currentHidden
+				case 'r', 'R':
+					currentBlink = !currentBlink
+				case 'f', 'F':
+					currentDim = !currentDim
 				}
 			}
 		case termbox.EventError:

@@ -267,8 +267,6 @@ func send_attr(fg, bg Attribute) {
 	}
 	if fg&AttrDim != 0 {
 		outbuf.WriteString(funcs[t_dim])
-		log("Wrinting dim")
-		log(funcs[t_dim])
 	}
 	if fg&AttrReverse|bg&AttrReverse != 0 {
 		outbuf.WriteString(funcs[t_reverse])
@@ -288,8 +286,6 @@ func send_char(x, y int, ch rune) {
 }
 
 func flush() error {
-	log("---------------------------")
-	log(outbuf.String())
 	_, err := io.Copy(out, &outbuf)
 	outbuf.Reset()
 	return err
