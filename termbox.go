@@ -159,12 +159,9 @@ func escapeRGB(fg bool, r uint8, g uint8, b uint8) string {
 		escape += "48"
 	}
 	escape += ";2;"
-	escape += strconv.FormatUint(uint64(r), 10)
-	escape += ";"
-	escape += strconv.FormatUint(uint64(g), 10)
-	escape += ";"
-	escape += strconv.FormatUint(uint64(b), 10)
-	escape += "m"
+	escape += strconv.FormatUint(uint64(r), 10) + ";"
+	escape += strconv.FormatUint(uint64(g), 10) + ";"
+	escape += strconv.FormatUint(uint64(b), 10) + "m"
 	return escape
 }
 
