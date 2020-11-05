@@ -9,7 +9,7 @@ type (
 	EventType  uint8
 	Modifier   uint8
 	Key        uint16
-	Attribute  uint16
+	Attribute  uint64
 )
 
 // This type represents a termbox event. The 'Mod', 'Key' and 'Ch' fields are
@@ -173,6 +173,7 @@ const (
 	Output256
 	Output216
 	OutputGrayscale
+	OutputRGB
 )
 
 // Event type. See Event.Type field.

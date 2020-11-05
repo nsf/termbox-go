@@ -102,6 +102,9 @@ func write_sgr_fg(a Attribute) {
 		outbuf.WriteString("\033[38;5;")
 		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
 		outbuf.WriteString("m")
+	case OutputRGB:
+		r, g, b := AttributeToRGB(a)
+		outbuf.WriteString(escapeRGB(false, r, g, b))
 	default:
 		outbuf.WriteString("\033[3")
 		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
@@ -115,6 +118,9 @@ func write_sgr_bg(a Attribute) {
 		outbuf.WriteString("\033[48;5;")
 		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
 		outbuf.WriteString("m")
+	case OutputRGB:
+		r, g, b := AttributeToRGB(a)
+		outbuf.WriteString(escapeRGB(false, r, g, b))
 	default:
 		outbuf.WriteString("\033[4")
 		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
@@ -131,6 +137,11 @@ func write_sgr(fg, bg Attribute) {
 		outbuf.WriteString("\033[48;5;")
 		outbuf.Write(strconv.AppendUint(intbuf, uint64(bg-1), 10))
 		outbuf.WriteString("m")
+	case OutputRGB:
+		r, g, b := AttributeToRGB(fg)
+		outbuf.WriteString(escapeRGB(true, r, g, b))
+		r, g, b = AttributeToRGB(bg)
+		outbuf.WriteString(escapeRGB(false, r, g, b))
 	default:
 		outbuf.WriteString("\033[3")
 		outbuf.Write(strconv.AppendUint(intbuf, uint64(fg-1), 10))
@@ -138,6 +149,40 @@ func write_sgr(fg, bg Attribute) {
 		outbuf.Write(strconv.AppendUint(intbuf, uint64(bg-1), 10))
 		outbuf.WriteString("m")
 	}
+}
+
+func escapeRGB(fg bool, r uint8, g uint8, b uint8) string {
+	var escape string = "\033["
+	if fg {
+		escape += "38"
+	} else {
+		escape += "48"
+	}
+	escape += ";2;"
+	escape += strconv.FormatUint(uint64(r), 10)
+	escape += ";"
+	escape += strconv.FormatUint(uint64(g), 10)
+	escape += ";"
+	escape += strconv.FormatUint(uint64(b), 10)
+	escape += "m"
+	return escape
+}
+
+func AttributeToRGB(attr Attribute) (uint8, uint8, uint8) {
+	var color uint64 = uint64(attr) / uint64(AttrReverse)
+	// Have to right-shift with the highest attribute bit
+	var b uint8 = uint8(color % 256)
+	var g uint8 = uint8(color >> 8 % 256)
+	var r uint8 = uint8(color >> 16 % 256)
+	return r, g, b
+}
+
+func RGBToAttribute(r uint8, g uint8, b uint8) Attribute {
+	var color uint64 = uint64(b)
+	color += uint64(g) << 8
+	color += uint64(r) << 16
+	color = color * uint64(AttrReverse)
+	return Attribute(color)
 }
 
 type winsize struct {
@@ -197,6 +242,9 @@ func send_attr(fg, bg Attribute) {
 		if bgcol != ColorDefault {
 			bgcol = grayscale[bgcol]
 		}
+	case OutputRGB:
+		fgcol = fg
+		bgcol = bg
 	default:
 		fgcol = fg & 0x0F
 		bgcol = bg & 0x0F
