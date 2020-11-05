@@ -12,17 +12,15 @@ import (
 	"os"
 )
 
+// This gives a table of the 256-color-set,
+// both the foreground and background variants.
+// It is ordered to produce many color ramps
+
 func draw_ramp() {
-	log_file, _ := os.OpenFile("/tmp/rgb.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	log_writer := bufio.NewWriter(log_file)
-	termbox.SetOutputMode(termbox.Output256)
 	var i int
 	for i = 0; i < 256; i++ {
 		row := ((i + 2) / 6) + 3
 		col := ((i + 2) % 6) * 4
-		//if i < 20 {
-		log_writer.WriteString(fmt.Sprintln("printing", i, "to", row, "x", col))
-		//}
 		var text string = fmt.Sprintf("%03d", i)
 		for j := 0; j < 3; j++ {
 			termbox.SetCell(col+j, row, []rune(text)[j],

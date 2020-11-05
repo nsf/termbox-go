@@ -6,6 +6,9 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
+// This example should demonstrate the functionality of full rgb-support,
+// as well as the ability to combine rgb colors and (multiple) attributes.
+
 var fgR uint8 = 150
 var fgG uint8 = 100
 var fgB uint8 = 50
