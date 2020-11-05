@@ -154,6 +154,9 @@ const (
 // them with caution and test your code on various terminals.
 const (
 	AttrBold Attribute = 1 << (iota + 9)
+	AttrBlink
+	AttrHidden
+	AttrDim
 	AttrUnderline
 	AttrCursive
 	AttrReverse

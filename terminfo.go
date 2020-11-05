@@ -230,8 +230,10 @@ var ti_funcs = []int16{
 	39,  // sgr0
 	36,  // underline
 	27,  // bold
+	32,  // hidden
 	26,  // blink
-	311, // italics
+	30,  // dim
+	311, // cursive
 	34,  // reverse
 	89,  // enter keypad ("keypad_xmit")
 	88,  // exit keypad ("keypad_local")

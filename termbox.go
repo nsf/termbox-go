@@ -26,7 +26,9 @@ const (
 	t_sgr0
 	t_underline
 	t_bold
+	t_hidden
 	t_blink
+	t_dim
 	t_cursive
 	t_reverse
 	t_enter_keypad
@@ -248,7 +250,10 @@ func send_attr(fg, bg Attribute) {
 	if fg&AttrBold != 0 {
 		outbuf.WriteString(funcs[t_bold])
 	}
-	if bg&AttrBold != 0 {
+	/*if bg&AttrBold != 0 {
+		outbuf.WriteString(funcs[t_blink])
+	}*/
+	if fg&AttrBlink != 0 {
 		outbuf.WriteString(funcs[t_blink])
 	}
 	if fg&AttrUnderline != 0 {
@@ -256,6 +261,14 @@ func send_attr(fg, bg Attribute) {
 	}
 	if fg&AttrCursive != 0 {
 		outbuf.WriteString(funcs[t_cursive])
+	}
+	if fg&AttrHidden != 0 {
+		outbuf.WriteString(funcs[t_hidden])
+	}
+	if fg&AttrDim != 0 {
+		outbuf.WriteString(funcs[t_dim])
+		log("Wrinting dim")
+		log(funcs[t_dim])
 	}
 	if fg&AttrReverse|bg&AttrReverse != 0 {
 		outbuf.WriteString(funcs[t_reverse])
@@ -275,6 +288,8 @@ func send_char(x, y int, ch rune) {
 }
 
 func flush() error {
+	log("---------------------------")
+	log(outbuf.String())
 	_, err := io.Copy(out, &outbuf)
 	outbuf.Reset()
 	return err
