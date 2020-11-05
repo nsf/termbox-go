@@ -155,6 +155,7 @@ const (
 const (
 	AttrBold Attribute = 1 << (iota + 9)
 	AttrUnderline
+	AttrCursive
 	AttrReverse
 )
 

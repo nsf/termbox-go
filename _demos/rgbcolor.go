@@ -36,42 +36,42 @@ func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
 }
 
 func redraw_all() {
-	tbprint(20, 5, coldef, coldef, " - Current Settings - ")
+	tbprint(20, 1, coldef, coldef, " - Current Settings - ")
 
 	var r, g, b string
 	r = fmt.Sprintf("%3d", fgR)
 	g = fmt.Sprintf("%3d", fgG)
 	b = fmt.Sprintf("%3d", fgB)
-	tbprint(4, 7, coldef, coldef, "Foreground Red:")
-	tbprint(5, 8, coldef, coldef, "[h] "+r+" [l]")
-	tbprint(4, 9, coldef, coldef, "Foreground Green:")
-	tbprint(5, 10, coldef, coldef, "[j] "+g+" [k]")
-	tbprint(4, 11, coldef, coldef, "Foreground Blue:")
-	tbprint(5, 12, coldef, coldef, "[u] "+b+" [i]")
+	tbprint(4, 3, coldef, coldef, "Foreground Red:")
+	tbprint(5, 4, coldef, coldef, "[h] "+r+" [l]")
+	tbprint(4, 5, coldef, coldef, "Foreground Green:")
+	tbprint(5, 6, coldef, coldef, "[j] "+g+" [k]")
+	tbprint(4, 7, coldef, coldef, "Foreground Blue:")
+	tbprint(5, 8, coldef, coldef, "[u] "+b+" [i]")
 
 	r = fmt.Sprintf("%3d", bgR)
 	g = fmt.Sprintf("%3d", bgG)
 	b = fmt.Sprintf("%3d", bgB)
-	tbprint(23, 7, coldef, coldef, "Background Red:")
-	tbprint(24, 8, coldef, coldef, "[H] "+r+" [L]")
-	tbprint(23, 9, coldef, coldef, "Background Green:")
-	tbprint(24, 10, coldef, coldef, "[J] "+g+" [K]")
-	tbprint(23, 11, coldef, coldef, "Background Blue:")
-	tbprint(24, 12, coldef, coldef, "[U] "+b+" [I]")
+	tbprint(23, 3, coldef, coldef, "Background Red:")
+	tbprint(24, 4, coldef, coldef, "[H] "+r+" [L]")
+	tbprint(23, 5, coldef, coldef, "Background Green:")
+	tbprint(24, 6, coldef, coldef, "[J] "+g+" [K]")
+	tbprint(23, 7, coldef, coldef, "Background Blue:")
+	tbprint(24, 8, coldef, coldef, "[U] "+b+" [I]")
 
 	var bold, ul, rev string
 	bold = boolLabel[currentBold]
 	ul = boolLabel[currentUnderline]
 	rev = boolLabel[currentReverse]
 
-	tbprint(42, 7, coldef, coldef, "Bold:")
-	tbprint(43, 8, coldef, coldef, bold+" [w]")
-	tbprint(42, 9, coldef, coldef, "Underline:")
-	tbprint(43, 10, coldef, coldef, ul+" [a]")
-	tbprint(42, 11, coldef, coldef, "Reverse:")
-	tbprint(43, 12, coldef, coldef, rev+" [s]")
+	tbprint(42, 3, coldef, coldef, "Bold:")
+	tbprint(43, 4, coldef, coldef, bold+" [w]")
+	tbprint(42, 5, coldef, coldef, "Underline:")
+	tbprint(43, 6, coldef, coldef, ul+" [a]")
+	tbprint(42, 7, coldef, coldef, "Reverse:")
+	tbprint(43, 8, coldef, coldef, rev+" [s]")
 
-	tbprint(20, 14, coldef, coldef, "Quit with [q] or [ESC]")
+	tbprint(20, 10, coldef, coldef, "Quit with [q] or [ESC]")
 
 	fg := termbox.RGBToAttribute(uint8(fgR), uint8(fgG), uint8(fgB))
 	tfg := fg
@@ -87,9 +87,9 @@ func redraw_all() {
 		fg |= termbox.AttrReverse
 		tfg |= termbox.AttrReverse
 	}
-	tbprint(15, 16, fg, bg, padding)
-	tbprint(15, 17, tfg, bg, preview)
-	tbprint(15, 18, fg, bg, padding)
+	tbprint(18, 12, fg, bg, padding)
+	tbprint(18, 13, tfg, bg, preview)
+	tbprint(18, 14, fg, bg, padding)
 
 	termbox.Flush()
 }

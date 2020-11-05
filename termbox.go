@@ -23,6 +23,7 @@ const (
 	t_underline
 	t_bold
 	t_blink
+	t_cursive
 	t_reverse
 	t_enter_keypad
 	t_exit_keypad
@@ -248,6 +249,9 @@ func send_attr(fg, bg Attribute) {
 	}
 	if fg&AttrUnderline != 0 {
 		outbuf.WriteString(funcs[t_underline])
+	}
+	if fg&AttrCursive != 0 {
+		outbuf.WriteString(funcs[t_cursive])
 	}
 	if fg&AttrReverse|bg&AttrReverse != 0 {
 		outbuf.WriteString(funcs[t_reverse])
