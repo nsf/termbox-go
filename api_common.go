@@ -160,6 +160,7 @@ const (
 	AttrUnderline
 	AttrCursive
 	AttrReverse
+	max_attr
 )
 
 // Input mode. See SetInputMode function.
