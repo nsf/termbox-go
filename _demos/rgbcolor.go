@@ -20,6 +20,7 @@ var bgB uint8 = 150
 var currentBold bool = true
 var currentUnderline bool = false
 var currentReverse bool = false
+var currentRGB bool = true
 var currentCursive bool = false
 var currentHidden bool = false
 var currentBlink bool = false
@@ -63,10 +64,11 @@ func redraw_all() {
 	tbprint(23, 7, coldef, coldef, "Background Blue:")
 	tbprint(24, 8, coldef, coldef, "[U] "+b+" [I]")
 
-	var bold, ul, rev, cur, hid, blink, dim string
+	var bold, ul, rev, rgb, cur, hid, blink, dim string
 	bold = boolLabel[currentBold]
 	ul = boolLabel[currentUnderline]
 	rev = boolLabel[currentReverse]
+	rgb = boolLabel[currentRGB]
 	cur = boolLabel[currentCursive]
 	hid = boolLabel[currentHidden]
 	blink = boolLabel[currentBlink]
@@ -78,6 +80,8 @@ func redraw_all() {
 	tbprint(43, 6, coldef, coldef, ul+" [a]")
 	tbprint(42, 7, coldef, coldef, "Reverse:")
 	tbprint(43, 8, coldef, coldef, rev+" [s]")
+	tbprint(42, 9, coldef, coldef, "Full RGB:")
+	tbprint(43, 10, coldef, coldef, rgb+" [t]")
 	tbprint(54, 3, coldef, coldef, "Cursive:")
 	tbprint(55, 4, coldef, coldef, cur+" [d]")
 	tbprint(54, 5, coldef, coldef, "Hidden:")
@@ -87,12 +91,20 @@ func redraw_all() {
 	tbprint(54, 9, coldef, coldef, "Dim:")
 	tbprint(55, 10, coldef, coldef, dim+" [f]")
 
-	tbprint(20, 10, coldef, coldef, "Quit with [q] or [ESC]")
-	tbprint(6, 11, coldef|termbox.AttrDim, coldef, "Note that RGB may be incompatible with other modifiers")
+	tbprint(20, 12, coldef, coldef, "Quit with [q] or [ESC]")
+	tbprint(6, 13, coldef, coldef, "Note that RGB may be incompatible with other modifiers")
 
-	fg := termbox.RGBToAttribute(uint8(fgR), uint8(fgG), uint8(fgB))
-	tfg := fg
-	bg := termbox.RGBToAttribute(uint8(bgR), uint8(bgG), uint8(bgB))
+	var fg, bg termbox.Attribute
+	if currentRGB {
+		termbox.SetOutputMode(termbox.OutputRGB)
+		fg = termbox.RGBToAttribute(uint8(fgR), uint8(fgG), uint8(fgB))
+		bg = termbox.RGBToAttribute(uint8(bgR), uint8(bgG), uint8(bgB))
+	} else {
+		termbox.SetOutputMode(termbox.OutputNormal)
+		fg = termbox.ColorRed
+		bg = termbox.ColorDefault
+	}
+	tfg := fg // tfg are the attributes that should be applied to the text
 	if currentBold {
 		tfg |= termbox.AttrBold
 	}
@@ -118,9 +130,9 @@ func redraw_all() {
 		fg |= termbox.AttrDim
 		tfg |= termbox.AttrDim
 	}
-	tbprint(18, 12, fg, bg, padding)
-	tbprint(18, 13, tfg, bg, preview)
-	tbprint(18, 14, fg, bg, padding)
+	tbprint(18, 15, fg, bg, padding)
+	tbprint(18, 16, tfg, bg, preview)
+	tbprint(18, 17, fg, bg, padding)
 
 	termbox.Flush()
 }
@@ -133,7 +145,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	termbox.SetOutputMode(termbox.OutputRGB)
 	defer termbox.Close()
 	termbox.SetInputMode(termbox.InputEsc)
 
@@ -180,6 +191,8 @@ mainloop:
 					currentUnderline = !currentUnderline
 				case 's', 'S':
 					currentReverse = !currentReverse
+				case 't', 'T':
+					currentRGB = !currentRGB
 				case 'd', 'D':
 					currentCursive = !currentCursive
 				case 'e', 'E':
