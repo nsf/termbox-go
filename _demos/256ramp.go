@@ -7,9 +7,6 @@ import (
 	"github.com/nsf/termbox-go"
 
 	"fmt"
-
-	"bufio"
-	"os"
 )
 
 // This gives a table of the 256-color-set,
