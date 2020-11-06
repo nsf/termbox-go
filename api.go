@@ -520,6 +520,7 @@ func RGBToAttribute(r uint8, g uint8, b uint8) Attribute {
 	var color uint64 = uint64(b)
 	color += uint64(g) << 8
 	color += uint64(r) << 16
+	color += 1 << 25
 	color = color * uint64(max_attr)
 	// Left-shift back to the place where rgb is stored.
 	return Attribute(color)

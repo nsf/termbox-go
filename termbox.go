@@ -111,7 +111,7 @@ func write_sgr_fg(a Attribute) {
 		outbuf.WriteString("m")
 	case OutputRGB:
 		r, g, b := AttributeToRGB(a)
-		outbuf.WriteString(escapeRGB(false, r, g, b))
+		outbuf.WriteString(escapeRGB(true, r, g, b))
 	default:
 		if a < ColorDarkGray {
 			outbuf.WriteString("\033[3")
