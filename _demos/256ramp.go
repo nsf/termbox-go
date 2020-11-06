@@ -11,7 +11,8 @@ import (
 
 // This gives a table of the 256-color-set,
 // both the foreground and background variants.
-// It is ordered to produce many color ramps
+// It is ordered to produce many color ramps.
+// Quit with ESC
 
 func draw_ramp() {
 	var i int
@@ -34,22 +35,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer termbox.Close()
 	termbox.SetInputMode(termbox.InputEsc)
+	termbox.SetOutputMode(termbox.Output256)
 
 	draw_ramp()
 
-mainloop:
-	for {
-		switch ev := termbox.PollEvent(); ev.Type {
-		case termbox.EventKey:
-			switch ev.Key {
-			case termbox.KeyEsc:
-				break mainloop
-			}
-		case termbox.EventError:
-			panic(ev.Err)
-		}
-		draw_ramp()
-	}
+	termbox.PollEvent()
+	termbox.Close()
 }
