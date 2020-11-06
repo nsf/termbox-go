@@ -142,6 +142,14 @@ const (
 	ColorMagenta
 	ColorCyan
 	ColorWhite
+	ColorDarkGray
+	ColorLightRed
+	ColorLightGreen
+	ColorLightYellow
+	ColorLightBlue
+	ColorLightMagenta
+	ColorLightCyan
+	ColorLightGray
 )
 
 // Cell attributes, it is possible to use multiple attributes by combining them

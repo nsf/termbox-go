@@ -113,9 +113,15 @@ func write_sgr_fg(a Attribute) {
 		r, g, b := AttributeToRGB(a)
 		outbuf.WriteString(escapeRGB(false, r, g, b))
 	default:
-		outbuf.WriteString("\033[3")
-		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
-		outbuf.WriteString("m")
+		if a < ColorDarkGray {
+			outbuf.WriteString("\033[3")
+			outbuf.Write(strconv.AppendUint(intbuf, uint64(a-ColorBlack), 10))
+			outbuf.WriteString("m")
+		} else {
+			outbuf.WriteString("\033[9")
+			outbuf.Write(strconv.AppendUint(intbuf, uint64(a-ColorDarkGray), 10))
+			outbuf.WriteString("m")
+		}
 	}
 }
 
@@ -129,9 +135,15 @@ func write_sgr_bg(a Attribute) {
 		r, g, b := AttributeToRGB(a)
 		outbuf.WriteString(escapeRGB(false, r, g, b))
 	default:
-		outbuf.WriteString("\033[4")
-		outbuf.Write(strconv.AppendUint(intbuf, uint64(a-1), 10))
-		outbuf.WriteString("m")
+		if a < ColorDarkGray {
+			outbuf.WriteString("\033[4")
+			outbuf.Write(strconv.AppendUint(intbuf, uint64(a-ColorBlack), 10))
+			outbuf.WriteString("m")
+		} else {
+			outbuf.WriteString("\033[10")
+			outbuf.Write(strconv.AppendUint(intbuf, uint64(a-ColorDarkGray), 10))
+			outbuf.WriteString("m")
+		}
 	}
 }
 
@@ -150,11 +162,24 @@ func write_sgr(fg, bg Attribute) {
 		r, g, b = AttributeToRGB(bg)
 		outbuf.WriteString(escapeRGB(false, r, g, b))
 	default:
-		outbuf.WriteString("\033[3")
-		outbuf.Write(strconv.AppendUint(intbuf, uint64(fg-1), 10))
-		outbuf.WriteString(";4")
-		outbuf.Write(strconv.AppendUint(intbuf, uint64(bg-1), 10))
-		outbuf.WriteString("m")
+		if fg < ColorDarkGray {
+			outbuf.WriteString("\033[3")
+			outbuf.Write(strconv.AppendUint(intbuf, uint64(fg-ColorBlack), 10))
+			outbuf.WriteString(";")
+		} else {
+			outbuf.WriteString("\033[9")
+			outbuf.Write(strconv.AppendUint(intbuf, uint64(fg-ColorDarkGray), 10))
+			outbuf.WriteString(";")
+		}
+		if bg < ColorDarkGray {
+			outbuf.WriteString("4")
+			outbuf.Write(strconv.AppendUint(intbuf, uint64(bg-ColorBlack), 10))
+			outbuf.WriteString("m")
+		} else {
+			outbuf.WriteString("10")
+			outbuf.Write(strconv.AppendUint(intbuf, uint64(bg-ColorDarkGray), 10))
+			outbuf.WriteString("m")
+		}
 	}
 }
 
@@ -233,8 +258,8 @@ func send_attr(fg, bg Attribute) {
 		fgcol = fg
 		bgcol = bg
 	default:
-		fgcol = fg & 0x0F
-		bgcol = bg & 0x0F
+		fgcol = fg & 0xFF
+		bgcol = bg & 0xFF
 	}
 
 	if fgcol != ColorDefault {
