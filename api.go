@@ -25,6 +25,10 @@ import (
 //      }
 //      defer termbox.Close()
 func Init() error {
+	if IsInit {
+		return
+	}
+
 	var err error
 
 	if runtime.GOOS == "openbsd" || runtime.GOOS == "freebsd" {
@@ -130,6 +134,10 @@ func Interrupt() {
 // Finalizes termbox library, should be called after successful initialization
 // when termbox's functionality isn't required anymore.
 func Close() {
+	if !IsInit {
+		return
+	}
+
 	quit <- 1
 	out.WriteString(funcs[t_show_cursor])
 	out.WriteString(funcs[t_sgr0])
