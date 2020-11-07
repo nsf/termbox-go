@@ -26,7 +26,7 @@ import (
 //      defer termbox.Close()
 func Init() error {
 	if IsInit {
-		return
+		return nil
 	}
 
 	var err error
