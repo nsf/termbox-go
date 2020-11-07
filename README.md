@@ -21,7 +21,6 @@ There are also some interesting projects using termbox-go:
  - [httopd](https://github.com/verdverm/httopd) is top for httpd logs.
  - [mop](https://github.com/mop-tracker/mop) is stock market tracker for hackers.
  - [termui](https://github.com/gizak/termui) is a terminal dashboard.
- - [termdash](https://github.com/mum4k/termdash) is a terminal dashboard.
  - [termloop](https://github.com/JoelOtter/termloop) is a terminal game engine.
  - [xterm-color-chart](https://github.com/kutuluk/xterm-color-chart) is a XTerm 256 color chart.
  - [gocui](https://github.com/jroimartin/gocui) is a minimalist Go library aimed at creating console user interfaces.
@@ -29,22 +28,20 @@ There are also some interesting projects using termbox-go:
  - [pxl](https://github.com/ichinaski/pxl) displays images in the terminal.
  - [snake-game](https://github.com/DyegoCosta/snake-game) is an implementation of the Snake game.
  - [gone](https://github.com/guillaumebreton/gone) is a CLI pomodoro® timer.
- - [Spoof.go](https://github.com/sabey/spoofgo) controllable movement spoofing from the cli
- - [lf](https://github.com/gokcehan/lf) is a terminal file manager
+ - [Spoof.go](https://github.com/sabey/spoofgo) controllable movement spoofing from the cli.
  - [rat](https://github.com/ericfreese/rat) lets you compose shell commands to build terminal applications.
  - [httplab](https://github.com/gchaincl/httplab) An interactive web server.
- - [tetris](https://github.com/MichaelS11/tetris) Go Tetris with AI option
  - [wot](https://github.com/kyu-suke/wot) Wait time during command is completed.
- - [2048-go](https://github.com/1984weed/2048-go) is 2048 in Go
+ - [2048-go](https://github.com/1984weed/2048-go) is 2048 in Go.
  - [jv](https://github.com/maxzender/jv) helps you view JSON on the command-line.
  - [pinger](https://github.com/hirose31/pinger) helps you to monitor numerous hosts using ICMP ECHO_REQUEST.
- - [vixl44](https://github.com/sebashwa/vixl44) lets you create pixel art inside your terminal using vim movements
- - [zterm](https://github.com/varunrau/zterm) is a typing game inspired by http://zty.pe/
+ - [vixl44](https://github.com/sebashwa/vixl44) lets you create pixel art inside your terminal using vim movements.
+ - [zterm](https://github.com/varunrau/zterm) is a typing game inspired by http://zty.pe/.
  - [gotypist](https://github.com/pb-/gotypist) is a fun touch-typing tutor following Steve Yegge's method.
  - [cointop](https://github.com/miguelmota/cointop) is an interactive terminal based UI application for tracking cryptocurrencies.
  - [pexpo](https://github.com/nnao45/pexpo) is a terminal sending ping tool written in Go.
  - [jid](https://github.com/simeji/jid) is an interactive JSON drill down tool using filtering queries like jq.
- - [nonograminGo](https://github.com/N0RM4L15T/nonograminGo) is a nonogram(aka. picross) in Go
+ - [nonograminGo](https://github.com/N0RM4L15T/nonograminGo) is a nonogram (aka. picross) in Go.
  - [tower-of-go](https://github.com/kjirou/tower-of-go) is a tiny maze game that runs on the terminal.
 
 ### API reference
