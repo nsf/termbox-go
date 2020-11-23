@@ -174,6 +174,50 @@ func SetCell(x, y int, ch rune, fg, bg Attribute) {
 	back_buffer.cells[y*back_buffer.width+x] = Cell{ch, fg, bg}
 }
 
+// Returns the specified cell from the internal back buffer.
+func GetCell(x, y int) Cell {
+	return back_buffer.cells[y*back_buffer.width+x]
+}
+
+// Changes cell's character (rune) in the internal back buffer at the
+// specified position.
+func SetChar(x, y int, ch rune) {
+	if x < 0 || x >= back_buffer.width {
+		return
+	}
+	if y < 0 || y >= back_buffer.height {
+		return
+	}
+
+	back_buffer.cells[y*back_buffer.width+x].Ch = ch
+}
+
+// Changes cell's foreground attributes in the internal back buffer at
+// the specified position.
+func SetFg(x, y int, fg Attribute) {
+	if x < 0 || x >= back_buffer.width {
+		return
+	}
+	if y < 0 || y >= back_buffer.height {
+		return
+	}
+
+	back_buffer.cells[y*back_buffer.width+x].Fg = fg
+}
+
+// Changes cell's background attributes in the internal back buffer at
+// the specified position.
+func SetBg(x, y int, bg Attribute) {
+	if x < 0 || x >= back_buffer.width {
+		return
+	}
+	if y < 0 || y >= back_buffer.height {
+		return
+	}
+
+	back_buffer.cells[y*back_buffer.width+x].Bg = bg
+}
+
 // Returns a slice into the termbox's back buffer. You can get its dimensions
 // using 'Size' function. The slice remains valid as long as no 'Clear' or
 // 'Flush' function calls were made after call to this function.
