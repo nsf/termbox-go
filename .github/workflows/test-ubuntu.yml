@@ -30,3 +30,9 @@ jobs:
 
     - name: Test
       run: go test -v .
+
+    - name: Run Hello world
+      run: go run ./_demos/hello_world.go
+
+    - name: Build all demos
+      run: ls _demos/*.go -1 | xargs -I {} go build {}
