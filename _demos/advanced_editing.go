@@ -7,8 +7,8 @@ import "time"
 import "math/rand"
 
 // will display a lot of colored letters.
-// you can move the cursor using arrow keys.
-// the background color will change randomly over time
+// you can change the background color using the arrow keys
+// the foreground color will change randomly over time
 
 var letters = []rune{'o', 'x', 'i', 'n', 'u', 's', ' '}
 
