@@ -2,7 +2,7 @@ name: Test on Ubuntu
 
 on:
   push:
-    branches: [ master, github-ci ]
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
