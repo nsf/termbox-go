@@ -34,6 +34,6 @@ jobs:
     - name: Build all demos
       run: |
         Get-ChildItem -Path _demos/*.go | ForEach-Object {
-          Write-Output "Building ./_demos/$_.Name"
-          go build ./_demos/$_.Name
+          Write-Output "Building ./_demos/",$_.Name
+          go build $_.Name
         }
