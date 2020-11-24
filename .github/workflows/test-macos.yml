@@ -1,4 +1,4 @@
-name: Go
+name: Test on mac os
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 jobs:
 
   build:
-    name: Build
+    name: Run tests
     runs-on: macos-latest
     steps:
 
@@ -32,4 +32,4 @@ jobs:
       run: go test -v .
 
     - name: Build all demos
-      run: for f in $(ls _demos/*.go); do go build "./_demos/$f"; done
+      run: for f in $(ls _demos/*.go); do go build "$f"; done

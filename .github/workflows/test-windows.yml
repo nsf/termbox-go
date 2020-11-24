@@ -1,4 +1,4 @@
-name: Go
+name: Test on Windows
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 jobs:
 
   build:
-    name: Build
+    name: Run tests
     runs-on: windows-latest
     steps:
 
