@@ -141,7 +141,9 @@ func Close() {
 	quit <- 1
 	out.WriteString(funcs[t_show_cursor])
 	out.WriteString(funcs[t_sgr0])
-	out.WriteString(funcs[t_clear_screen])
+	if isAltScreen {
+		out.WriteString(funcs[t_clear_screen])
+	}
 	out.WriteString(funcs[t_exit_ca])
 	out.WriteString(funcs[t_exit_keypad])
 	out.WriteString(funcs[t_exit_mouse])
@@ -167,7 +169,10 @@ func Close() {
 	IsInit = false
 }
 
+var isAltScreen bool = true
+
 func SelectScreen(alt bool) {
+	isAltScreen = alt
 	if alt {
 		out.WriteString(funcs[t_enter_ca])
 	} else {
