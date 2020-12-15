@@ -167,6 +167,14 @@ func Close() {
 	IsInit = false
 }
 
+func SelectScreen(alt bool) {
+	if alt {
+		out.WriteString(funcs[t_enter_ca])
+	} else {
+		out.WriteString(funcs[t_exit_ca])
+	}
+}
+
 // Synchronizes the internal back buffer with the terminal.
 func Flush() error {
 	// invalidate cursor position
