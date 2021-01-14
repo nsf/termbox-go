@@ -111,6 +111,12 @@ func Interrupt() {
 	interrupt_comm <- struct{}{}
 }
 
+// https://docs.microsoft.com/en-us/windows/console/char-info-str
+const (
+	common_lvb_leading_byte  = 0x0100
+	common_lvb_trailing_byte = 0x0200
+)
+
 // Synchronizes the internal back buffer with the terminal.
 func Flush() error {
 	update_size_maybe()
@@ -118,12 +124,15 @@ func Flush() error {
 	for _, diff := range diffbuf {
 		chars := []char_info{}
 		for _, char := range diff.chars {
-			chars = append(chars, char)
 			if runewidth.RuneWidth(rune(char.char)) > 1 {
+				char.attr |= common_lvb_leading_byte
+				chars = append(chars, char)
 				chars = append(chars, char_info{
-					char: ' ',
-					attr: char.attr,
+					char: char.char,
+					attr: char.attr | common_lvb_trailing_byte,
 				})
+			} else {
+				chars = append(chars, char)
 			}
 		}
 		r := small_rect{
