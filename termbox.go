@@ -17,7 +17,8 @@ const (
 	// for future contributors: after adding something here,
 	// you have to add the corresponding index in a terminfo
 	// file to `terminfo.go#ti_funcs`. The values can be taken
-	// from (ncurses) `term.h`.
+	// from (ncurses) `term.h`. The builtin terminfo at terminfo_builtin.go
+	// also needs adjusting with the new values.
 	t_enter_ca = iota
 	t_exit_ca
 	t_show_cursor
