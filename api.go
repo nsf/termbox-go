@@ -48,6 +48,13 @@ func Init() error {
 		}
 	}
 
+	// Fd clears the O_NONBLOCK flag. On systems where in and out are the
+	// same file descriptor (see above), that would be a problem, because
+	// the in file descriptor needs to be nonblocking. Save the Fd return
+	// value here so that we won't need to call Fd later after the in file
+	// descriptor has been made nonblocking (see below).
+	outfd = out.Fd()
+
 	err = setup_term()
 	if err != nil {
 		return fmt.Errorf("termbox: error while reading terminfo data: %v", err)
@@ -64,7 +71,7 @@ func Init() error {
 	if runtime.GOOS != "darwin" && err != nil {
 		return err
 	}
-	err = tcgetattr(out.Fd(), &orig_tios)
+	err = tcgetattr(outfd, &orig_tios)
 	if err != nil {
 		return err
 	}
@@ -80,7 +87,7 @@ func Init() error {
 	tios.Cc[syscall_VMIN] = 1
 	tios.Cc[syscall_VTIME] = 0
 
-	err = tcsetattr(out.Fd(), &tios)
+	err = tcsetattr(outfd, &tios)
 	if err != nil {
 		return err
 	}
@@ -90,7 +97,7 @@ func Init() error {
 	out.WriteString(funcs[t_hide_cursor])
 	out.WriteString(funcs[t_clear_screen])
 
-	termw, termh = get_term_size(out.Fd())
+	termw, termh = get_term_size(outfd)
 	back_buffer.init(termw, termh)
 	front_buffer.init(termw, termh)
 	back_buffer.clear()
@@ -145,7 +152,7 @@ func Close() {
 	out.WriteString(funcs[t_exit_ca])
 	out.WriteString(funcs[t_exit_keypad])
 	out.WriteString(funcs[t_exit_mouse])
-	tcsetattr(out.Fd(), &orig_tios)
+	tcsetattr(outfd, &orig_tios)
 
 	out.Close()
 	syscall.Close(in)
@@ -359,7 +366,7 @@ func PollRawEvent(data []byte) Event {
 
 		case <-sigwinch:
 			event.Type = EventResize
-			event.Width, event.Height = get_term_size(out.Fd())
+			event.Width, event.Height = get_term_size(outfd)
 			return event
 		}
 	}
@@ -434,7 +441,7 @@ func PollEvent() Event {
 
 		case <-sigwinch:
 			event.Type = EventResize
-			event.Width, event.Height = get_term_size(out.Fd())
+			event.Width, event.Height = get_term_size(outfd)
 			return event
 		}
 	}
