@@ -71,6 +71,7 @@ var (
 	input_mode     = InputEsc
 	output_mode    = OutputNormal
 	out            *os.File
+	outfd          uintptr
 	in             int
 	lastfg         = attr_invalid
 	lastbg         = attr_invalid
@@ -336,7 +337,7 @@ func send_clear() error {
 }
 
 func update_size_maybe() error {
-	w, h := get_term_size(out.Fd())
+	w, h := get_term_size(outfd)
 	if w != termw || h != termh {
 		termw, termh = w, h
 		back_buffer.resize(termw, termh)
