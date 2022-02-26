@@ -481,6 +481,10 @@ func parse_mouse_event(event *Event, buf string) (int, bool) {
 			event.Mod |= ModMotion
 		}
 
+		if n1&16 != 0 {
+			event.Mod |= ModCtrl
+		}
+
 		event.MouseX = int(n2) - 1
 		event.MouseY = int(n3) - 1
 		return mi + 1, true
