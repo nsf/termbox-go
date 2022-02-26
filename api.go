@@ -557,3 +557,8 @@ func Sync() error {
 
 	return Flush()
 }
+
+//FireEvent is used to fire event when needed. Mostly for testing purpose
+func FireEvent(data []byte) {
+	input_comm <- input_event{data, nil}
+}
