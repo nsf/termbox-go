@@ -8,10 +8,10 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"syscall"
 	"time"
 
 	"github.com/mattn/go-runewidth"
+	"golang.org/x/sys/unix"
 )
 
 // public API
@@ -44,7 +44,7 @@ func Init() error {
 		if err != nil {
 			return err
 		}
-		in, err = syscall.Open("/dev/tty", syscall.O_RDONLY, 0)
+		in, err = unix.Open("/dev/tty", unix.O_RDONLY, 0)
 		if err != nil {
 			out.Close() // Clean up output file descriptor on error
 			return err
@@ -62,55 +62,48 @@ func Init() error {
 	if err != nil {
 		out.Close()
 		if runtime.GOOS != "openbsd" && runtime.GOOS != "freebsd" {
-			syscall.Close(in)
+			unix.Close(in)
 		}
 		return fmt.Errorf("termbox: error while reading terminfo data: %v", err)
 	}
 
-	signal.Notify(sigwinch, syscall.SIGWINCH)
-	signal.Notify(sigio, syscall.SIGIO)
+	signal.Notify(sigwinch, unix.SIGWINCH)
+	signal.Notify(sigio, unix.SIGIO)
 
-	_, err = fcntl(in, syscall.F_SETFL, syscall.O_ASYNC|syscall.O_NONBLOCK)
+	err = setFdAsync(in)
 	if err != nil {
 		out.Close()
 		if runtime.GOOS != "openbsd" && runtime.GOOS != "freebsd" {
-			syscall.Close(in)
+			unix.Close(in)
 		}
 		return err
 	}
-	_, err = fcntl(in, syscall.F_SETOWN, syscall.Getpid())
-	if runtime.GOOS != "darwin" && err != nil {
-		out.Close()
-		if runtime.GOOS != "openbsd" && runtime.GOOS != "freebsd" {
-			syscall.Close(in)
-		}
-		return err
-	}
-	err = tcgetattr(outfd, &orig_tios)
+
+	orig_tios, err = tcgetattr(outfd)
 	if err != nil {
 		out.Close()
 		if runtime.GOOS != "openbsd" && runtime.GOOS != "freebsd" {
-			syscall.Close(in)
+			unix.Close(in)
 		}
 		return err
 	}
 
 	tios := orig_tios
-	tios.Iflag &^= syscall_IGNBRK | syscall_BRKINT | syscall_PARMRK |
-		syscall_ISTRIP | syscall_INLCR | syscall_IGNCR |
-		syscall_ICRNL | syscall_IXON
-	tios.Lflag &^= syscall_ECHO | syscall_ECHONL | syscall_ICANON |
-		syscall_ISIG | syscall_IEXTEN
-	tios.Cflag &^= syscall_CSIZE | syscall_PARENB
-	tios.Cflag |= syscall_CS8
-	tios.Cc[syscall_VMIN] = 1
-	tios.Cc[syscall_VTIME] = 0
+	tios.Iflag &^= unix.IGNBRK | unix.BRKINT | unix.PARMRK |
+		unix.ISTRIP | unix.INLCR | unix.IGNCR |
+		unix.ICRNL | unix.IXON
+	tios.Lflag &^= unix.ECHO | unix.ECHONL | unix.ICANON |
+		unix.ISIG | unix.IEXTEN
+	tios.Cflag &^= unix.CSIZE | unix.PARENB
+	tios.Cflag |= unix.CS8
+	tios.Cc[unix.VMIN] = 1
+	tios.Cc[unix.VTIME] = 0
 
-	err = tcsetattr(outfd, &tios)
+	err = tcsetattr(outfd, tios)
 	if err != nil {
 		out.Close()
 		if runtime.GOOS != "openbsd" && runtime.GOOS != "freebsd" {
-			syscall.Close(in)
+			unix.Close(in)
 		}
 		return err
 	}
@@ -132,8 +125,8 @@ func Init() error {
 			select {
 			case <-sigio:
 				for {
-					n, err := syscall.Read(in, buf)
-					if err == syscall.EAGAIN || err == syscall.EWOULDBLOCK {
+					n, err := unix.Read(in, buf)
+					if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 						break
 					}
 					select {
@@ -175,10 +168,10 @@ func Close() {
 	out.WriteString(funcs[t_exit_ca])
 	out.WriteString(funcs[t_exit_keypad])
 	out.WriteString(funcs[t_exit_mouse])
-	tcsetattr(outfd, &orig_tios)
+	tcsetattr(outfd, orig_tios)
 
 	out.Close()
-	syscall.Close(in)
+	unix.Close(in)
 
 	// reset the state, so that on next Init() it will work again
 	termw = 0

@@ -9,9 +9,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"syscall"
 	"unicode/utf8"
-	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
 // private API
@@ -76,7 +76,7 @@ var (
 	funcs []string
 
 	// termbox inner state
-	orig_tios      syscall_Termios
+	orig_tios      unix.Termios
 	back_buffer    cellbuf
 	front_buffer   cellbuf
 	termw          int
@@ -216,18 +216,9 @@ func escapeRGB(fg bool, r uint8, g uint8, b uint8) string {
 	return builder.String()
 }
 
-type winsize struct {
-	rows    uint16
-	cols    uint16
-	xpixels uint16
-	ypixels uint16
-}
-
 func get_term_size(fd uintptr) (int, int) {
-	var sz winsize
-	_, _, _ = syscall.Syscall(syscall.SYS_IOCTL,
-		fd, uintptr(syscall.TIOCGWINSZ), uintptr(unsafe.Pointer(&sz)))
-	return int(sz.cols), int(sz.rows)
+	sz, _ := unix.IoctlGetWinsize(int(fd), unix.TIOCGWINSZ)
+	return int(sz.Col), int(sz.Row)
 }
 
 func send_attr(fg, bg Attribute) {
@@ -365,22 +356,16 @@ func update_size_maybe() error {
 	return nil
 }
 
-func tcsetattr(fd uintptr, termios *syscall_Termios) error {
-	r, _, e := syscall.Syscall(syscall.SYS_IOCTL,
-		fd, uintptr(syscall_TCSETS), uintptr(unsafe.Pointer(termios)))
-	if r != 0 {
-		return os.NewSyscallError("SYS_IOCTL", e)
-	}
-	return nil
+func tcsetattr(fd uintptr, termios unix.Termios) error {
+	return unix.IoctlSetTermios(int(fd), tcsets, &termios)
 }
 
-func tcgetattr(fd uintptr, termios *syscall_Termios) error {
-	r, _, e := syscall.Syscall(syscall.SYS_IOCTL,
-		fd, uintptr(syscall_TCGETS), uintptr(unsafe.Pointer(termios)))
-	if r != 0 {
-		return os.NewSyscallError("SYS_IOCTL", e)
+func tcgetattr(fd uintptr) (unix.Termios, error) {
+	tios, err := unix.IoctlGetTermios(int(fd), tcgets)
+	if err != nil {
+		return unix.Termios{}, err
 	}
-	return nil
+	return *tios, nil
 }
 
 func parse_mouse_event(event *Event, buf string) (int, bool) {
@@ -607,14 +592,4 @@ func extract_event(inbuf []byte, event *Event, allow_esc_wait bool) extract_even
 	}
 
 	return event_not_extracted
-}
-
-func fcntl(fd int, cmd int, arg int) (val int, err error) {
-	r, _, e := syscall.Syscall(syscall.SYS_FCNTL, uintptr(fd), uintptr(cmd),
-		uintptr(arg))
-	val = int(r)
-	if e != 0 {
-		err = e
-	}
-	return
 }
