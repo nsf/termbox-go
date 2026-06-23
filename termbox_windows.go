@@ -526,6 +526,14 @@ var color_table_bg = []word{
 	background_red | background_blue,   // magenta
 	background_green | background_blue, // cyan
 	background_red | background_blue | background_green, // white
+	background_intensity, // dark gray
+	background_red | background_intensity, // light red
+	background_green | background_intensity, // light green
+	background_red | background_green, // light yellow
+	background_blue | background_intensity, // light blue
+	background_red | background_blue | background_intensity, // light magenta
+	background_green | background_blue | background_intensity, // light cyan
+	background_red | background_blue | background_green | background_intensity, // light gray
 }
 
 var color_table_fg = []word{
@@ -538,6 +546,14 @@ var color_table_fg = []word{
 	foreground_red | foreground_blue,   // magenta
 	foreground_green | foreground_blue, // cyan
 	foreground_red | foreground_blue | foreground_green, // white
+	foreground_intensity, // dark gray
+	foreground_red | foreground_intensity, // light red
+	foreground_green | foreground_intensity, // light green
+	foreground_red | foreground_green | foreground_intensity, // light yellow
+	foreground_blue | foreground_intensity, // light blue
+	foreground_red | foreground_blue | foreground_intensity, // light magenta
+	foreground_green | foreground_blue | foreground_intensity, // light cyan
+	foreground_red | foreground_blue | foreground_green | foreground_intensity, // light gray
 }
 
 const (
@@ -615,7 +631,7 @@ func prepare_diff_messages() {
 }
 
 func get_ct(table []word, idx int) word {
-	idx = idx & 0x0F
+	idx = idx & 0xFF
 	if idx >= len(table) {
 		idx = len(table) - 1
 	}
