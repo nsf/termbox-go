@@ -61,6 +61,9 @@ func main() {
 	tbprint(15, i+4, termbox.ColorDefault, termbox.ColorDefault,
 		"Press any key to close...")
 	termbox.Flush()
-	termbox.PollEvent()
+
+	for termbox.PollEvent().Type != termbox.EventKey {
+	}
+
 	termbox.Close()
 }
